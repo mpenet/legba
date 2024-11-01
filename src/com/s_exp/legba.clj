@@ -154,7 +154,7 @@
 
       (and (= ptn0 \*) s0)
       (or
-       (recur ptn rs)
+       (match-content-type? ptn rs)
        (recur rptn s)))))
 
 (defn match-schema-content-type
