@@ -19,7 +19,7 @@
         com.cnuernber/charred {:mvn/version "1.034"}}
  :aliases
  {:test
-  {:extra-deps {appia/test-runner {:local/root "dev"}
+  {:extra-deps {legba/test-runner {:local/root "dev"}
                 org.clojure/test.check {:mvn/version "1.1.1"}}
    :jvm-opts ["-Dclojure.main.report=stderr"]
 
