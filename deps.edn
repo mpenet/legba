@@ -1,0 +1,37 @@
+{:paths ["src" "resources"]
+
+ :exoscale.project/pom-data
+ [[:licenses
+   [:license
+    [:name "Eclipse Public License version 1.0"]
+    [:url "https://opensource.org/license/epl-1-0/"]
+    [:distribution "repo"]]]]
+
+ :deps {org.clojure/clojure {:mvn/version "1.12.0"}
+        metosin/reitit-ring {:mvn/version "0.7.1"}
+        exoscale/ex {:mvn/version "0.4.1"}
+        exoscale/coax {:mvn/version "2.0.0"}
+        com.exoscale/lingo {:git/url "git@github.com:exoscale/lingo.git"
+                            :git/sha "dfefee47c52f1081283dd08107d7893fd27ceeb9"}
+        com.s-exp/pact {:git/url "git@github.com:mpenet/pact.git"
+                        :git/sha "4ec0abb17b4a72153574fa9a60567e8c665c1b6c"}
+        io.swagger.parser.v3/swagger-parser {:mvn/version "2.1.22"}
+        com.cnuernber/charred {:mvn/version "1.034"}}
+ :aliases
+ {:test
+  {:extra-deps {appia/test-runner {:local/root "dev"}
+                org.clojure/test.check {:mvn/version "1.1.1"}}
+   :jvm-opts ["-Dclojure.main.report=stderr"]
+
+   :exec-fn test-runner/run
+   :extra-paths ["test" "dev"]}
+
+  :quickdoc
+  {:deps {org.babashka/cli {:mvn/version "0.4.36"}
+          io.github.borkdude/quickdoc
+          {:deps/root "jvm"
+           :git/sha "7c8bef54eda28367193ec433af01bb940114f012"}}
+   :exec-fn quickdoc.api/quickdoc
+   :exec-args {:github/repo "https://github.com/mpenet/pact"
+               :git/branch "master"
+               :source-paths ["src/s_exp/pact.clj"]}}}}
