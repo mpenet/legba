@@ -264,22 +264,25 @@
 
 (defn- spec->component-file-name
   [spec]
-  (format "%s.%s.json" (namespace spec)
-          (name spec)))
+  [(str/replace (namespace spec) "." "/")
+   (format "%s.json" (name spec))])
 
 (defn register-spec!
   [spec-key & {:as _opts
-               :keys [path pact-opts schema-opts]
-               :or {path "assets/openapi/components"}}]
-  (when-not (.exists (io/file path))
-    (.mkdirs (io/file path)))
-  (spit (io/file path (spec->component-file-name spec-key))
-        (charred/write-json-str
-         (merge (pact/json-schema spec-key pact-opts)
-                {:x-spec (format "%s/%s"
-                                 (namespace spec-key)
-                                 (name spec-key))}
-                schema-opts)))
+               :keys [assets-path pact-opts schema-opts]
+               :or {assets-path "assets/openapi/components"}}]
+  (let [[path file] (spec->component-file-name spec-key)
+        full-path (io/file assets-path path)]
+    (when-not (.exists full-path)
+      (.mkdirs full-path))
+    (spit (io/file full-path file)
+          (charred/write-json-str
+           (merge (pact/json-schema spec-key (merge {:add-x-spec true} pact-opts))
+                  {:x-spec (format "%s/%s"
+                                   (namespace spec-key)
+                                   (name spec-key))}
+                  schema-opts))))
+
   spec-key)
 
 (ex/derive ::invalid-request :exoscale.ex/invalid)
@@ -299,15 +302,26 @@
 
 ;; "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/refs/heads/main/examples/v3.0/petstore.json"
 
-(s/def :s-exp.legba/pets (s/coll-of map?))
 (-> (s/def :s-exp.legba.pet/id int?)
-    register-spec!)
-(-> (s/def :s-exp.legba/pet map?)
-    register-spec!)
+    (register-spec!))
+
+(-> (s/def :s-exp.legba/pets (s/coll-of map?))
+    (register-spec!))
+
+(-> (s/def :s-exp.legba/pet (s/keys :req-un [:s-exp.legba.pet/id]))
+    (register-spec!))
+
 (-> (s/def :s-exp.legba/next-page string?)
+    (register-spec!))
+
+(-> (s/def :s-exp.legba/error map?)
+    register-spec!)
+
+(-> (s/def :s-exp.legba.pets.query/limit (s/int-in 0 100))
     register-spec!)
 
 (def schema (load-schema (slurp (io/resource "petstore.json"))))
+(do schema)
 
 (prn ((openapi-handler {[:get "/pets/{petId}"]
                         (fn [_request]

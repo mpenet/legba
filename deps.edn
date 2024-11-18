@@ -14,7 +14,7 @@
         com.exoscale/lingo {:git/url "git@github.com:exoscale/lingo.git"
                             :git/sha "dfefee47c52f1081283dd08107d7893fd27ceeb9"}
         com.s-exp/pact {:git/url "git@github.com:mpenet/pact.git"
-                        :git/sha "4ec0abb17b4a72153574fa9a60567e8c665c1b6c"}
+                        :git/sha "32e90d396ecf5e8ced3bc6eecf572bfb39fa1fa5"}
         io.swagger.parser.v3/swagger-parser {:mvn/version "2.1.22"}
         com.cnuernber/charred {:mvn/version "1.034"}}
  :aliases

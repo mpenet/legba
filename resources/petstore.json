@@ -23,9 +23,8 @@
                         "description": "How many items to return at one time (max 100)",
                         "required": false,
                         "schema": {
-                            "type": "integer",
-                            "maximum": 100,
-                            "format": "int32"
+                            "$ref": "http://localhost:8000/s-exp/legba/pets/query/limit.json",
+                            "id": "pets-query-limit"
                         }
                     }
                 ],
@@ -36,15 +35,14 @@
                             "x-next": {
                                 "description": "A link to the next page of responses",
                                 "schema": {
-                                    "x-spec": "s-exp.legba/next-page",
-                                    "type": "string"
+                                    "$ref": "#/components/schemas/next-page"
                                 }
                             }
                         },
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Pets"
+                                    "$ref": "#/components/schemas/pets"
                                 }
                             }
                         }
@@ -54,7 +52,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/error"
                                 }
                             }
                         }
@@ -71,7 +69,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pet"
+                                "$ref": "#/components/schemas/pet"
                             }
                         }
                     },
@@ -86,7 +84,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/error"
                                 }
                             }
                         }
@@ -108,8 +106,7 @@
                         "required": true,
                         "description": "The id of the pet to retrieve",
                         "schema": {
-                            "x-spec": "s-exp.legba.pet/id",
-                            "type": "string"
+                            "$ref": "#/components/schemas/pet/properties/id"
                         }
                     }
                 ],
@@ -119,7 +116,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Pet"
+                                    "$ref": "#/components/schemas/pet"
                                 }
                             }
                         }
@@ -129,7 +126,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/error"
                                 }
                             }
                         }
@@ -140,49 +137,17 @@
     },
     "components": {
         "schemas": {
-            "Pet": {
-                "x-spec": "s-exp.legba/pet",
-                "type": "object",
-                "required": [
-                    "id",
-                    "name"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "tag": {
-                        "type": "string"
-                    }
-                }
+            "pet": {
+                "$ref": "http://localhost:8000/s-exp/legba/pet.json"
             },
-            "Pets": {
-                "x-spec": "s-exp.legba/pets",
-                "type": "array",
-                "maxItems": 100,
-                "items": {
-                    "$ref": "#/components/schemas/Pet"
-                }
+            "pets": {
+                "$ref": "http://localhost:8000/s-exp/legba/pets.json"
             },
-            "Error": {
-                "type": "object",
-                "required": [
-                    "code",
-                    "message"
-                ],
-                "properties": {
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    }
-                }
+            "error": {
+                "$ref": "http://localhost:8000/s-exp/legba/error.json"
+            },
+            "next-page": {
+                "$ref": "http://localhost:8000/s-exp/legba/next-page.json"
             }
         }
     }
