@@ -13,8 +13,6 @@
                                  SchemaLocation)
            (com.networknt.schema SpecVersion$VersionFlag PathType)
            (com.networknt.schema.oas OpenApi31)
-           (com.networknt.schema.resource AllowSchemaLoader)
-
            (io.swagger.v3.core.util Json)
            (io.swagger.v3.parser OpenAPIV3Parser)
            (io.swagger.v3.parser.core.models ParseOptions)))
@@ -73,14 +71,7 @@
         (doto builder
           (.metaSchema (OpenApi31/getInstance))
           (.defaultMetaSchemaIri (.getIri (OpenApi31/getInstance)))
-
-          ;;                   (.add schema-loaders (AllowSchemaLoader.
-          ;;                                         (fn [iri]
-          ;;                                           true)))))
-          (.enableSchemaCache true)
-          ;; (.schemaMappers (fn [schema-mapper]
-          ;;                   (.mapPrefix schema-mapper "https://spec.openapis.org/oas/3.0", "classpath:")))
-          )))}))
+          (.enableSchemaCache true))))}))
 
 (defn router
   "Creates a reitit path router by method"
@@ -220,7 +211,7 @@
 
 (defn conform-request
   [request]
-  ;; coerce & validate params
+  ;; validate params
   (-> request
       request->conform-path-params
       request->conform-query-params
