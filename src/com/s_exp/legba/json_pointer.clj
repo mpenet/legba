@@ -10,6 +10,17 @@
       (str/replace "~1" "/")
       (str/replace "~0" "~")))
 
+(defn encode-token
+  "Encodes a single reference token according to RFC 6901."
+  [token]
+  (-> token
+      (str/replace "~" "~0")
+      (str/replace "/" "~1")))
+
+(defn pointer-append
+  [pointer val]
+  (str pointer "/" (encode-token val)))
+
 (defn parse-json-pointer
   "Parses a JSON Pointer string into a sequence of reference tokens."
   [pointer]
@@ -38,16 +49,16 @@
           json-data
           (parse-json-pointer pointer)))
 
-;; (def doc {"foo" ["bar", "baz"],
-;;           "" 0,
-;;           "a/b" 1,
-;;           "c%d" 2,
-;;           "e^f" 3,
-;;           "g|h" 4,
-;;           "i\\j" 5,
-;;           "k\"l" 6,
-;;           " " 7,
-;;           "m~n" 8})
+(def doc {"foo" ["bar", "baz"],
+          "" 0,
+          "a/b" 1,
+          "c%d" 2,
+          "e^f" 3,
+          "g|h" 4,
+          "i\\j" 5,
+          "k\"l" 6,
+          " " 7,
+          "m~n" 8})
 
 ;; (def out
 ;;   {"" doc

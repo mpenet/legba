@@ -1,47 +1,109 @@
 (ns s-exp.legba
   (:require [charred.api :as charred]
             [clojure.java.io :as io]
-            [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [exoscale.coax :as cx]
             [exoscale.ex :as ex]
             [reitit.core :as r]
-            [s-exp.pact :as pact])
-  (:import (io.swagger.v3.core.util Json)
+            [s-exp.legba.json-pointer :as json-pointer])
+  (:import (com.networknt.schema JsonSchemaFactory
+                                 SchemaValidatorsConfig
+                                 InputFormat
+
+                                 OutputFormat
+                                 SchemaLocation)
+           (com.networknt.schema SpecVersion$VersionFlag PathType)
+           (com.networknt.schema.oas OpenApi31)
+           (com.networknt.schema.resource AllowSchemaLoader)
+
+           (io.swagger.v3.core.util Json)
            (io.swagger.v3.parser OpenAPIV3Parser)
            (io.swagger.v3.parser.core.models ParseOptions)))
 
+(defn add-pointer
+  [node pointer]
+  (vary-meta node assoc :json-pointer pointer))
+
+(defn write-json-pointers
+  ([node]
+   (write-json-pointers node ""))
+  ([node pointer]
+   (cond
+     (map? node)
+     (-> (reduce-kv (fn [m k v]
+                      (assoc m
+                             k
+                             (write-json-pointers v
+                                                  (json-pointer/pointer-append pointer k))))
+                    {}
+                    node)
+         (add-pointer pointer))
+
+     (sequential? node)
+     (-> (into []
+               (map-indexed (fn [idx x]
+                              (write-json-pointers x
+                                                   (json-pointer/pointer-append pointer
+                                                                                idx))))
+               node)
+         (add-pointer pointer))
+
+     :else node)))
+
+;; (meta (get-in (write-json-pointers {"a" {"b" {"c" [{"a" 1} {"b" {"b" {"c" [{"a" 1} {"b" "2"}]}}} {"a" 1} {"b" {"b" {"c" [{"a" 1} {"b" "2"}]}}} {"a" 1} {"b" {"b" {"c" [{"a" 1} {"b" "2"}]}}} {"a" 1} {"b" {"b" {"c" [{"a" 1} {"b" "2"}]}}} {"a" 1} {"b" {"b" {"c" [{"a" 1} {"b" "2"}]}}} {"a" 1} {"b" {"b" {"c" [{"a" 1} {"b" "2"}]}}} {"a" 1} {"b" {"b" {"c" [{"a" 1} {"b" "2"}]}}}]}}}) ["a" "b" "c" 1 "b" "b" "c" 0]))
+
 (defn- load-schema
-  [^String schema-str]
-  (let [parse-options (doto (ParseOptions.)
+  [^String schema-resource-file]
+  (let [schema-str (slurp (io/resource schema-resource-file))
+        parse-options (doto (ParseOptions.)
                         (.setResolveFully true)
-                        (.setValidateExternalRefs true))]
-    (-> (.readContents (OpenAPIV3Parser.) schema-str
-                       nil
-                       parse-options)
-        (Json/pretty)
-        (charred/read-json)
-        (get "openAPI"))))
+                        (.setValidateExternalRefs true))
+        json-schema-raw (-> (.readContents (OpenAPIV3Parser.) schema-str
+                                           nil
+                                           parse-options)
+                            (Json/pretty)
+                            (charred/read-json)
+                            (get "openAPI"))
+        openapi-schema (write-json-pointers json-schema-raw)]
+    {:openapi-schema openapi-schema
+     :schema-resource-file schema-resource-file
+     :json-schema-factory
+     (JsonSchemaFactory/getInstance
+      SpecVersion$VersionFlag/V202012
+      (fn [builder]
+        (doto builder
+          (.metaSchema (OpenApi31/getInstance))
+          (.defaultMetaSchemaIri (.getIri (OpenApi31/getInstance)))
+
+          ;;                   (.add schema-loaders (AllowSchemaLoader.
+          ;;                                         (fn [iri]
+          ;;                                           true)))))
+          (.enableSchemaCache true)
+          ;; (.schemaMappers (fn [schema-mapper]
+          ;;                   (.mapPrefix schema-mapper "https://spec.openapis.org/oas/3.0", "classpath:")))
+          )))}))
 
 (defn router
   "Creates a reitit path router by method"
-  [schema & {:as _opts :keys [extra-routes]}]
+  [{:as schema :keys [openapi-schema]} & {:as _opts :keys [extra-routes]}]
   (-> (reduce (fn [routers-m [method & route]]
                 (update routers-m
                         method
                         (fnil conj [])
                         (vec route)))
               {}
-              (for [[path methods] (get schema "paths")
+              (for [[path methods] (get openapi-schema "paths")
                     [method parameters] methods
                     :let [method (keyword method)]]
                 [(keyword method)
                  path
-                 {:path path :method method :openapi parameters}]))
+                 {:path path
+                  :method method
+                  :sub-schema
+                  ;; to stop reitit from messing with my metadata...
+                  ((promise) parameters)}]))
       (update-vals (fn [routes]
-                     (r/router
-                      (merge routes extra-routes)
-                      {:syntax :bracket})))
+                     (r/router (merge routes extra-routes)
+                               {:syntax :bracket})))
       (vary-meta assoc :schema schema)))
 
 (defn match-route
@@ -52,52 +114,6 @@
         (seq path-params)
         (assoc :path-params (update-keys path-params keyword))))))
 
-(defn m->spec
-  [m]
-  (some-> (get m "x-spec") keyword))
-
-(defn m->fn
-  [m]
-  (some-> (get m "x-fn") keyword))
-
-(defn spec-conform
-  [schema val {:as _opts :keys [error-message
-                                ex-type
-                                ex-data]
-               :or {error-message "Invalid request"
-                    ex-type ::invalid-request}}]
-  (let [spec (m->spec schema)
-        coerced (cx/coerce spec val)]
-    (when-not (s/valid? spec coerced)
-      (throw (ex-info error-message
-                      (merge {:type ex-type
-                              :explain (s/explain-data spec coerced)}
-                             ex-data))))
-    coerced))
-
-(defn fn-conform
-  [schema val opts]
-  (if-let [f (requiring-resolve (m->fn schema))]
-    (f schema val opts)
-    (throw (ex-info "Coudln't resolve `x-fn` attributes for schema"
-                    {:type ::x-fn-not-found
-                     :schema schema
-                     :val val}))))
-
-(defn conform
-  [schema val & {:as opts}]
-  (let [spec-schema (m->spec schema)
-        fn-schema (m->fn schema)]
-    (cond
-      spec-schema
-      (spec-conform schema val opts)
-      fn-schema
-      (fn-conform schema val opts)
-      :else
-      (throw (ex-info "Missing x-spec or x-fn attributes for schema"
-                      {:schema schema
-                       :val val})))))
-
 (defn- match->params-schema-fn [param-type]
   (fn [request]
     (not-empty
@@ -105,40 +121,54 @@
            (keep (fn [param]
                    (when (= param-type (get param "in"))
                      [(keyword (get param "name")) param])))
-           (-> request ::match :openapi (get "parameters"))))))
+           (-> request meta :match :sub-schema deref (get "parameters"))))))
 
 (def request->query-params-schema (match->params-schema-fn "query"))
 (def request->path-params-schema (match->params-schema-fn "path"))
 
+(def schema-validator-config
+  (doto (SchemaValidatorsConfig.)
+    (.setPreloadJsonSchema true)
+    (.setCacheRefs true)
+    (.setFormatAssertionsEnabled true)
+    (.setTypeLoose true)
+    (.setPreloadJsonSchemaRefMaxNestingDepth 40)
+    (.setPathType PathType/JSON_PATH)))
+
+(defn validate!
+  [{:as schema :keys [schema-resource-file openapi-schema]} sub-schema val]
+  (let [ptr (:json-pointer (meta sub-schema))
+        schema (.getSchema (:json-schema-factory schema)
+                           (.resolve (SchemaLocation/of (format "classpath://%s" schema-resource-file))
+                                     (str "#" ptr))
+                           schema-validator-config)]
+    (not-empty (.validate schema val
+                          InputFormat/JSON
+                          OutputFormat/DEFAULT))))
+
 (defn request->conform-query-params
   [request]
-  (if-let [m-query-params (request->query-params-schema request)]
-    (reduce (fn [request [query-param-key query-param-val]]
-              (let [query-param-schema (get (get m-query-params query-param-key)
-                                            "schema")]
-                (assoc-in request [:params query-param-key]
-                          (conform query-param-schema
-                                   query-param-val
-                                   {:ex-type ::invalid-query-parameters
-                                    :message "Invalid query params"}))))
-            request
-            (:params request))
-    request))
+  (let [{:keys [schema]} (meta request)]
+    (when-let [m-query-params (request->query-params-schema request)]
+      (doseq [[query-param-key query-param-val] (:params request)]
+        (when-let [query-param-schema (get m-query-params [query-param-key "schema"])]
+          (when-let [errors (validate! schema query-param-schema (pr-str query-param-val))]
+            (throw (ex-info "Invalid query-parameters"
+                            {:type ::invalid-query-parameters
+                             :errors errors})))))))
+  request)
 
 (defn request->conform-path-params
   [request]
-  (if-let [m-path-params (request->path-params-schema request)]
-    (reduce (fn [request [path-param-key path-param-val]]
-              (let [path-param-schema (get (get m-path-params path-param-key)
-                                           "schema")]
-                (assoc-in request [:path-params path-param-key]
-                          (conform path-param-schema
-                                   path-param-val
-                                   {:ex-type ::invalid-path-parameters
-                                    :message "Invalid path parameter"}))))
-            request
-            (:path-params (::match request)))
-    request))
+  (let [{:keys [match schema]} (meta request)]
+    (when-let [m-path-params (request->path-params-schema request)]
+      (doseq [[path-param-key path-param-val] (:path-params match)]
+        (when-let [path-param-schema (get-in m-path-params [path-param-key "schema"])]
+          (when-let [errors (validate! schema path-param-schema (pr-str path-param-val))]
+            (throw (ex-info "Invalid path-parameters"
+                            {:type ::invalid-path-parameters
+                             :errors (into [] (map str) errors)})))))))
+  request)
 
 (defn- match-content-type?
   [ptn s]
@@ -173,19 +203,20 @@
             content-types)))
 
 (defn request->conform-body
-  [{:as request :keys [body content-type] ::keys [match]}]
-  (let [req-body-schema (get match "requestBody")]
-    (if (get req-body-schema "required")
-      (if-let [schema (match-schema-content-type req-body-schema content-type)]
-        (assoc request :body
-               (conform schema
-                        body
-                        {:ex-type ::invalid-request-body
-                         :message "Invalid Payload"}))
+  [{:as request :keys [body headers]}]
+  (let [{:keys [schema match]} (meta request)
+        req-body-schema (some-> match :sub-schema deref (get "requestBody"))]
+    (when (get req-body-schema "required")
+      (if-let [body-schema (match-schema-content-type req-body-schema
+                                                      (get headers :content-type))]
+        (when-let [errors (validate! schema body-schema body)]
+          (throw (ex-info "Invalid body"
+                          {:type ::invalid-request-body
+                           :errors (into [] (map str) errors)})))
         (throw (ex-info "No matching content-type in schema for request"
                         {:type ::invalid-request-content-type
-                         :message "Invalid content type for request"})))
-      request)))
+                         :message "Invalid content type for request"}))))
+    request))
 
 (defn conform-request
   [request]
@@ -196,56 +227,56 @@
       request->conform-body))
 
 (defn handler-for-request
-  [handlers {:as _request ::keys [match]}]
-  (or (get handlers [(:method match) (:path match)])
-      (throw (ex-info "No handler registered for request"
-                      {:type ::no-handler-for-request}))))
+  [handlers request]
+  (let [{:keys [match]} (meta request)]
+    (or (get handlers [(:method match) (:path match)])
+        (throw (ex-info "No handler registered for request"
+                        {:type ::no-handler-for-request})))))
 
 (defn conform-response-body
   [{:as response
     :keys [status content-type body]
-    ::keys [match]
     :or {status 200
          content-type "application/json"}}]
-  (let [ct-schema (or (get-in match [:openapi "responses" (str status)])
-                      (get-in match [:openapi "responses" "default"]))]
+  (let [{:keys [schema match]} (meta response)
+        sub-schema (some-> match :sub-schema deref)
+        ct-schema (or (get-in sub-schema ["responses" (str status)])
+                      (get-in sub-schema ["responses" "default"]))]
     (when-not ct-schema
       (throw (ex-info "Invalid response format for status"
                       {:type ::invalid-response-format-for-status
                        :message "Invalid response format for status"})))
-    (if-let [schema (match-schema-content-type ct-schema content-type)]
-      (assoc response :body
-             (conform schema
-                      body
-                      {:ex-type ::invalid-response-body
-                       :message "Invalid Response Body"}))
+    (if-let [body-schema (match-schema-content-type ct-schema content-type)]
+      (when-let [errors (validate! schema body-schema body)]
+        (throw (ex-info "Invalid response body"
+                        {:type ::invalid-response-body
+                         :errors (into [] (map str) errors)})))
       (throw (ex-info "Invalid response format for content-type"
                       {:type ::invalid-response-format
-                       :message "Invalid response format"})))))
+                       :message "Invalid response format"})))
+    response))
 
 (defn conform-response-headers
   [{:as response
     :keys [status]
-    ::keys [match]
     :or {status 200}}]
-  (if-let [headers-schema (get-in match [:openapi "responses" (str status) "headers"])]
-    (reduce (fn [response [header-name header-schema]]
-              (update-in response
-                         [:headers header-name]
-                         (fn [header-val]
-                           (conform (get header-schema "schema")
-                                    header-val
-                                    :ex-type ::invalid-response-header
-                                    :message (format "Invalid Response Header: %s:%s"
-                                                     header-name
-                                                     header-val)))))
-            response
-            headers-schema)
-    response))
+  (let [{:keys [schema match]} response]
+    (when-let [headers-schema (some-> match :sub-schema deref
+                                      (get-in ["responses" (str status) "headers"]))]
+      (doseq [[header-name header-schema] headers-schema
+              :let [header-val (get-in response [:headers header-name])]]
+        (when-let [errors (validate! schema header-schema (pr-str header-val))]
+          (throw (ex-info (format "Invalid Response Header: %s:%s"
+                                  header-name
+                                  header-val)
+                          {:type ::invalid-response-header
+                           :errors errors}))))))
+  response)
 
 (defn conform-response
   [response]
-  (-> response conform-response-headers conform-response-body))
+  (-> response conform-response-headers
+      conform-response-body))
 
 (defn openapi-handler
   [handlers & {:as _opts
@@ -254,36 +285,19 @@
   (let [router (router schema)]
     (fn [{:as request :keys [request-method uri]}]
       (if-let [match (match-route router request-method uri)]
-        (let [request (assoc request ::match match)
+        (let [request (vary-meta request
+                                 assoc
+                                 :match match
+                                 :schema schema)
               request (conform-request request)
               handler (handler-for-request handlers request)
-              response (assoc (handler request) ::match match)
+              response (vary-meta (handler request)
+                                  assoc
+                                  :match match
+                                  :schema schema)
               response (conform-response response)]
-          (dissoc response ::match))
+          (vary-meta response dissoc :match :schema))
         not-found-response))))
-
-(defn- spec->component-file-name
-  [spec]
-  [(str/replace (namespace spec) "." "/")
-   (format "%s.json" (name spec))])
-
-(defn register-spec!
-  [spec-key & {:as _opts
-               :keys [assets-path pact-opts schema-opts]
-               :or {assets-path "assets/openapi/components"}}]
-  (let [[path file] (spec->component-file-name spec-key)
-        full-path (io/file assets-path path)]
-    (when-not (.exists full-path)
-      (.mkdirs full-path))
-    (spit (io/file full-path file)
-          (charred/write-json-str
-           (merge (pact/json-schema spec-key (merge {:add-x-spec true} pact-opts))
-                  {:x-spec (format "%s/%s"
-                                   (namespace spec-key)
-                                   (name spec-key))}
-                  schema-opts))))
-
-  spec-key)
 
 (ex/derive ::invalid-request :exoscale.ex/invalid)
 (ex/derive ::invalid-response-header :exoscale.ex/invalid)
@@ -296,46 +310,30 @@
 (ex/derive ::x-spec-not-found :exoscale.ex/fault)
 (ex/derive ::no-handler-for-request :exoscale.ex/fault)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Playground                                                             ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;; Playground                                                             ;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/refs/heads/main/examples/v3.0/petstore.json"
+;; ;; "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/refs/heads/main/examples/v3.0/petstore.json"
 
-(-> (s/def :s-exp.legba.pet/id int?)
-    (register-spec!))
+;; (def schema (load-schema "petstore.json"))
+;; (do schema)
 
-(-> (s/def :s-exp.legba/pets (s/coll-of map?))
-    (register-spec!))
-
-(-> (s/def :s-exp.legba/pet (s/keys :req-un [:s-exp.legba.pet/id]))
-    (register-spec!))
-
-(-> (s/def :s-exp.legba/next-page string?)
-    (register-spec!))
-
-(-> (s/def :s-exp.legba/error map?)
-    register-spec!)
-
-(-> (s/def :s-exp.legba.pets.query/limit (s/int-in 0 100))
-    register-spec!)
-
-(def schema (load-schema (slurp (io/resource "petstore.json"))))
-(do schema)
-
-(prn ((openapi-handler {[:get "/pets/{petId}"]
-                        (fn [_request]
-                          {:body {:id 1
-                                  :name "foo"}})
-                        [:get "/pets"]
-                        (fn [_request]
-                          {:body [{:id "asd"}]
-                           :headers {"x-next" "asdf"}})
-                        [:post "/pets"]
-                        (fn [_request] {:body "post pet" :status 200})}
-                       :schema schema)
-      {:request-method :get :uri "/pets/1"}
-      ;; {:request-method :get :uri "/pets"}
-      ;; {:request-method :get :uri "/pets/1"}
-      ;; {:request-method :get :uri "/pets/asdf" :body "asdf"}
-      ))
+((openapi-handler {[:get "/pet/{petId}"]
+                   (fn [_request]
+                     {:body {:id 1
+                             :name "foo"}})
+                   [:get "/pets"]
+                   (fn [_request]
+                     {:body [{:id "asd"}]
+                      :headers {"x-next" "asdf"}})
+                   [:post "/pet"]
+                   (fn [_request]
+                     {:body "{\"name\":\"yolo\", \"photoUrls\": []}" :status 200})}
+                  :schema (load-schema "schema/oas/3.1/petstore.json"))
+ ;; {:request-method :get :uri "/pets/1"}
+ ;; {:request-method :get :uri "/pet/11"}
+ {:request-method :post
+  :headers {:content-type "application/json"}
+  :uri "/pet"
+  :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"})
