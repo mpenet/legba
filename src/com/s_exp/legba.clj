@@ -90,6 +90,7 @@
                   :method method
                   :sub-schema
                   ;; to stop reitit from messing with my metadata...
+                  ;; TODO just replace reitit with something less crazy (bidy, simple router?)
                   ((promise) parameters)}]))
       (update-vals (fn [routes]
                      (r/router (merge routes extra-routes)
@@ -107,16 +108,16 @@
         (update :sub-schema deref)))))
 
 (defn- match->params-schema-fn [param-type]
-  (fn [request sub-schema]
+  (fn [sub-schema]
     (not-empty
      (into {}
            (keep (fn [param]
                    (when (= param-type (get param "in"))
                      [(keyword (get param "name")) param])))
-           (-> request meta :match :sub-schema (get "parameters"))))))
+           (get sub-schema "parameters")))))
 
-(def request->query-params-schema (match->params-schema-fn "query"))
-(def request->path-params-schema (match->params-schema-fn "path"))
+(def query-params-schema (match->params-schema-fn "query"))
+(def path-params-schema (match->params-schema-fn "path"))
 
 (def schema-validator-config
   (doto (SchemaValidatorsConfig.)
@@ -140,23 +141,25 @@
 
 (defn request->conform-query-params
   [request schema sub-schema]
-  (when-let [m-query-params (request->query-params-schema request sub-schema)]
+  (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[query-param-key query-param-val] (:params request)]
       (when-let [query-param-schema (get m-query-params [query-param-key "schema"])]
         (when-let [errors (validate! schema query-param-schema (pr-str query-param-val))]
           (throw (ex-info "Invalid query-parameters"
                           {:type ::invalid-query-parameters
+                           :schema m-query-params
                            :errors errors}))))))
   request)
 
 (defn request->conform-path-params
   [request schema sub-schema]
-  (when-let [m-path-params (request->path-params-schema request sub-schema)]
+  (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[path-param-key path-param-val] (:path-params request)]
       (when-let [path-param-schema (get-in m-path-params [path-param-key "schema"])]
         (when-let [errors (validate! schema path-param-schema (pr-str path-param-val))]
           (throw (ex-info "Invalid path-parameters"
                           {:type ::invalid-path-parameters
+                           :schema m-path-params
                            :errors (into [] (map str) errors)}))))))
   request)
 
@@ -201,9 +204,11 @@
         (when-let [errors (validate! schema body-schema body)]
           (throw (ex-info "Invalid body"
                           {:type ::invalid-request-body
+                           :schema body-schema
                            :errors (into [] (map str) errors)})))
         (throw (ex-info "No matching content-type in schema for request"
                         {:type ::invalid-request-content-type
+                         :schema req-body-schema
                          :message "Invalid content type for request"}))))
     request))
 
@@ -216,10 +221,12 @@
       (request->conform-body schema sub-schema)))
 
 (defn handler-for-request
-  [handlers match]
-  (or (get handlers [(:method match) (:path match)])
-      (throw (ex-info "No handler registered for request"
-                      {:type ::no-handler-for-request}))))
+  [handlers {:keys [method path] :as _match}]
+  (let [req-key [method path]]
+    (or (get handlers req-key)
+        (throw (ex-info (format "Handler not defined for request %s"
+                                req-key)
+                        {:type ::handler-undefined})))))
 
 (defn conform-response-body
   [{:as response
@@ -231,14 +238,17 @@
     (when-not ct-schema
       (throw (ex-info "Invalid response format for status"
                       {:type ::invalid-response-format-for-status
+                       :schema sub-schema
                        :message "Invalid response format for status"})))
     (if-let [body-schema (match-schema-content-type ct-schema content-type)]
       (when-let [errors (validate! schema body-schema body)]
         (throw (ex-info "Invalid response body"
                         {:type ::invalid-response-body
+                         :schema body-schema
                          :errors (into [] (map str) errors)})))
       (throw (ex-info "Invalid response format for content-type"
                       {:type ::invalid-response-format
+                       :schema ct-schema
                        :message "Invalid response format"})))
     response))
 
@@ -253,6 +263,7 @@
                                 header-name
                                 header-val)
                         {:type ::invalid-response-header
+                         :schema headers-schema
                          :errors errors})))))
   response)
 
@@ -290,9 +301,7 @@
 (ex/derive ::invalid-path-parameters :exoscale.ex/invalid)
 (ex/derive ::invalid-query-parameters :exoscale.ex/invalid)
 (ex/derive ::invalid-request-content-type :exoscale.ex/invalid)
-(ex/derive ::x-fn-not-found :exoscale.ex/fault)
-(ex/derive ::x-spec-not-found :exoscale.ex/fault)
-(ex/derive ::no-handler-for-request :exoscale.ex/fault)
+(ex/derive ::handler-undefined :exoscale.ex/fault)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;;; Playground                                                             ;;;;
@@ -303,7 +312,7 @@
 ;; (def schema (load-schema "petstore.json"))
 ;; (do schema)
 
-((openapi-handler {[:get "/pet/{petId}"]
+((openapi-handler {[:get "/petx/{petId}"]
                    (fn [_request]
                      {:body (charred/write-json-str
                              {:id 1
@@ -318,8 +327,9 @@
                      {:body (charred/write-json-str {:name "yolo", :photoUrls []})
                       :status 200})}
                   :schema (load-schema "schema/oas/3.1/petstore.json"))
- ;; {:request-method :get :uri "/pet/2"}
- {:request-method :post
-  :headers {:content-type "application/json"}
-  :uri "/pet"
-  :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"})
+ {:request-method :get :uri "/pet/2"}
+ ;; {:request-method :post
+ ;;  :headers {:content-type "application/json"}
+ ;;  :uri "/pet"
+ ;;  :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"}
+ )
