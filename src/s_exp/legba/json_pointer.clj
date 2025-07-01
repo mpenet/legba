@@ -49,47 +49,31 @@
           json-data
           (parse-json-pointer pointer)))
 
-(def doc {"foo" ["bar", "baz"],
-          "" 0,
-          "a/b" 1,
-          "c%d" 2,
-          "e^f" 3,
-          "g|h" 4,
-          "i\\j" 5,
-          "k\"l" 6,
-          " " 7,
-          "m~n" 8})
+(defn add-pointer
+  [node pointer]
+  (vary-meta node assoc :json-pointer pointer))
 
-;; (def out
-;;   {"" doc
-;;    "/foo" ["bar", "baz"]
-;;    "/foo/0" "bar"
-;;    "/" 0
-;;    "/a~1b" 1
-;;    "/c%d" 2
-;;    "/e^f" 3
-;;    "/g|h" 4
-;;    "/i\\j" 5
-;;    "/k\"l" 6
-;;    "/ " 7
-;;    "/m~0n" 8})
-
-;; (def out2
-;;   {"#" doc
-;;    "#/foo" ["bar", "baz"]
-;;    "#/foo/0" "bar"
-;;    "#/" 0
-;;    "#/a~1b" 1
-;;    "#/c%25d" 2
-;;    "#/e%5Ef" 3
-;;    "#/g%7Ch" 4
-;;    "#/i%5Cj" 5
-;;    "#/k%22l" 6
-;;    "#/%20" 7
-;;    "#/m~0n" 8})
-
-;; (doseq [[pointer expected] out]
-;;   (prn (= expected (query doc pointer))))
-
-;; (doseq [[pointer expected] out2]
-;;   (prn (= expected (query doc pointer))))
+(defn annotate-tree
+  "Walks tree and add :json-pointer to every node"
+  ([node]
+   (annotate-tree node ""))
+  ([node pointer]
+   (cond
+     (map? node)
+     (-> (reduce-kv (fn [m k v]
+                      (assoc m
+                             k
+                             (annotate-tree v
+                                            (pointer-append pointer k))))
+                    {}
+                    node)
+         (add-pointer pointer))
+     (sequential? node)
+     (-> (into []
+               (map-indexed (fn [idx x]
+                              (annotate-tree x
+                                             (pointer-append pointer
+                                                             idx))))
+               node)
+         (add-pointer pointer))
+     :else node)))
