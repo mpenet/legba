@@ -8,14 +8,12 @@
     [:distribution "repo"]]]]
 
  :deps {org.clojure/clojure {:mvn/version "1.12.0"}
-        metosin/reitit-ring {:mvn/version "0.7.1"}
+        metosin/reitit-ring {:mvn/version "0.9.1"}
+        metosin/reitit-core {:mvn/version "0.9.1"}
         exoscale/ex {:mvn/version "0.4.1"}
-        exoscale/coax {:mvn/version "2.0.0"}
-        com.exoscale/lingo {:git/url "git@github.com:exoscale/lingo.git"
-                            :git/sha "dfefee47c52f1081283dd08107d7893fd27ceeb9"}
-        com.s-exp/pact {:git/url "git@github.com:mpenet/pact.git"
-                        :git/sha "32e90d396ecf5e8ced3bc6eecf572bfb39fa1fa5"}
         io.swagger.parser.v3/swagger-parser {:mvn/version "2.1.22"}
+        ;; playing with that lib
+        com.networknt/json-schema-validator {:mvn/version "1.5.7"}
         com.cnuernber/charred {:mvn/version "1.034"}}
  :aliases
  {:test
