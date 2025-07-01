@@ -40,23 +40,24 @@
 
 ;; ;; "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/refs/heads/main/examples/v3.0/petstore.json"
 
-(def h (openapi-handler {[:get "/pet/{petId}"]
-                         (fn [_request]
-                           {:body (charred/write-json-str
-                                   {:id 1
-                                    :name "foo"})})
-                         [:get "/pets"]
-                         (fn [_request]
-                           {:body (charred/write-json-str [{:id "asd"}])
-                      ;; :headers {"x-next" "asdf"}
-                            })
-                         [:post "/pet"]
-                         (fn [_request]
-                           {:body (charred/write-json-str {:name "yolo", :photoUrls []})
-                            :status 200})}
-                        :schema "schema/oas/3.1/petstore.json"))
+(comment
+  (def h (openapi-handler {[:get "/pet/{petId}"]
+                           (fn [_request]
+                             {:body (charred/write-json-str
+                                     {:id 1
+                                      :name "foo"})})
+                           [:get "/pets"]
+                           (fn [_request]
+                             {:body (charred/write-json-str [{:id "asd"}])
+                             ;; :headers {"x-next" "asdf"}
+                              })
+                           [:post "/pet"]
+                           (fn [_request]
+                             {:body (charred/write-json-str {:name "yolo", :photoUrls []})
+                              :status 200})}
+                          :schema "schema/oas/3.1/petstore.json"))
 
-(h {:request-method :get :uri "/pet/2"})
+  (h {:request-method :get :uri "/pet/2"}))
 
 ;; {:request-method :post
 ;;  :headers {:content-type "application/json"}
