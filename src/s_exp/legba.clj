@@ -22,7 +22,7 @@
   (let [{:as opts :keys [schema not-found-response]}
         (merge default-options opts)
         schema (schema/load-schema schema)
-        router (router/router schema)]
+        router (router/router schema opts)]
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as match :keys [sub-schema path-params]}
                (router/match-route router request-method uri)]
