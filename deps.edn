@@ -10,6 +10,7 @@
  :deps {org.clojure/clojure {:mvn/version "1.12.0"}
         metosin/reitit-ring {:mvn/version "0.9.1"}
         metosin/reitit-core {:mvn/version "0.9.1"}
+        metosin/jsonista {:mvn/version "0.3.13"}
         exoscale/ex {:mvn/version "0.4.1"}
         io.swagger.parser.v3/swagger-parser {:mvn/version "2.1.22"}
         ;; playing with that lib

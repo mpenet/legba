@@ -21,25 +21,31 @@
                        :message "Invalid response format for status"})))
     (if-let [body-schema (content-type/match-schema-content-type ct-schema content-type)]
       (let [json-body (json/json-content-type? content-type)
+            ;; if we have a json-body we convert it to jsonnode for validation
+            ;; and later returning handler value
             body (cond-> body json-body json/clj->json-node)]
-        (when-let [errors (schema/validate! schema body-schema body)]
-          (throw (ex-info "Invalid response body"
+        (when-let [errors (schema/validate! schema
+                                            body-schema
+                                            body)]
+          (throw (ex-info "Invalid Response Body"
                           {:type ::invalid-body
                            :schema body-schema
                            :errors (into [] (map str) errors)})))
+        ;; we converted the body, turn it into a string for the response
         (cond-> response
           json-body
-          (assoc :body body)))
+          (assoc :body (json/json-node->str body))))
       (throw (ex-info "Invalid response format for content-type"
                       {:type ::invalid-format
                        :schema ct-schema
-                       :message "Invalid response format"})))
-    response))
+                       :message "Invalid Response content-type"})))))
 
 (defn conform-response-headers
   [{:as response :keys [status] :or {status 200}}
    schema sub-schema]
-  (when-let [headers-schema (some-> sub-schema (get-in ["responses" (str status) "headers"]))]
+
+  (when-let [headers-schema (or (some-> sub-schema (get-in ["responses" (str status) "headers"]))
+                                (some-> sub-schema (get-in ["responses" "default" "headers"])))]
     (doseq [[header-name header-schema] headers-schema
             :let [header-val (get-in response [:headers header-name])]]
       (when-let [errors (schema/validate! schema header-schema (pr-str header-val))]

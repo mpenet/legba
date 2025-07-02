@@ -2,8 +2,10 @@
   (:require [charred.api :as charred]
             [clojure.java.io :as io]
             [s-exp.legba.json-pointer :as json-pointer])
-  (:import (com.fasterxml.jackson.databind ObjectMapper JsonNode)
+  (:import (com.fasterxml.jackson.databind JsonNode)
            (com.networknt.schema JsonSchemaFactory
+                                 JsonSchemaFactory$Builder
+                                 JsonSchema
                                  SchemaValidatorsConfig
                                  InputFormat
                                  OutputFormat
@@ -13,6 +15,8 @@
            (io.swagger.v3.core.util Json)
            (io.swagger.v3.parser OpenAPIV3Parser)
            (io.swagger.v3.parser.core.models ParseOptions)))
+
+(set! *warn-on-reflection* true)
 
 (def schema-validator-config
   (doto (SchemaValidatorsConfig.)
@@ -41,18 +45,18 @@
      :json-schema-factory
      (JsonSchemaFactory/getInstance
       SpecVersion$VersionFlag/V202012
-      (fn [builder]
+      (fn [^JsonSchemaFactory$Builder builder]
         (doto builder
           (.metaSchema (OpenApi31/getInstance))
           (.defaultMetaSchemaIri (.getIri (OpenApi31/getInstance)))
           (.enableSchemaCache true))))}))
 
 (defn- get-schema
-  [schema schema-resource-file ptr]
-  (.getSchema (:json-schema-factory schema)
+  ^JsonSchema [schema schema-resource-file ptr]
+  (.getSchema ^JsonSchemaFactory (:json-schema-factory schema)
               (.resolve (SchemaLocation/of (format "classpath://%s" schema-resource-file))
                         (str "#" ptr))
-              schema-validator-config))
+              ^SchemaValidatorsConfig schema-validator-config))
 
 (defn validate!
   [{:as schema :keys [schema-resource-file]} sub-schema val]

@@ -56,7 +56,7 @@
             (when-let [errors (schema/validate! schema
                                                 body-schema
                                                 body)]
-              (throw (ex-info "Invalid body"
+              (throw (ex-info "Invalid Request Body"
                               {:type ::invalid-body
                                :schema body-schema
                                :errors (into [] (map str) errors)})))

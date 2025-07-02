@@ -1,6 +1,5 @@
 (ns s-exp.legba
-  (:require [charred.api :as charred]
-            [exoscale.ex :as ex]
+  (:require [exoscale.ex :as ex]
             [s-exp.legba.request :as request]
             [s-exp.legba.response :as response]
             [s-exp.legba.router :as router]
@@ -42,24 +41,26 @@
 
 ;; (def h (openapi-handler {[:get "/pet/{petId}"]
 ;;                          (fn [_request]
-;;                            {:body (charred/write-json-str
-;;                                    {:id 1
-;;                                     :name "foo"})})
+;;                            {:body {:id 1
+;;                                    :name "foo"}})
 ;;                          [:get "/pets"]
 ;;                          (fn [_request]
-;;                            {:body (charred/write-json-str [{:id "asd"}])
+;;                            {:body [{:id "asd"}]
 ;;                       ;; :headers {"x-next" "asdf"}
 ;;                             })
 ;;                          [:post "/pet"]
-;;                          (fn [_request]
-;;                            {:body {"name" "yolo", "photoUrls" []}
+;;                          (fn [request]
+;;                            (prn :REQUEST request)
+;;                            {:body {:name "yolo", :photoUrls []}
 ;;                             :status 200})}
 ;;                         :schema "schema/oas/3.1/petstore.json"))
 
-;; (h
-;;  {:request-method :post
-;;   :headers {"content-type" "application/json"}
-;;   :uri "/pet"
-;;   :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"}
-;;  ;; {:request-method :get :uri "/pet/2"}
-;;  )
+;; (do
+;;   (prn :_---------------------)
+;;   (h
+;;    {:request-method :post
+;;     :headers {"content-type" "application/json"}
+;;     :uri "/pet"
+;;     :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"}
+;;   ;; {:request-method :get :uri "/pet/2"}
+;;    ))
