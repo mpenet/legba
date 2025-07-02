@@ -8,6 +8,7 @@
                                         ObjectNode
                                         ArrayNode
                                         NullNode
+                                        MissingNode
                                         LongNode
                                         IntNode
                                         DoubleNode
@@ -43,7 +44,15 @@
   (-json-node->clj [node opts]))
 
 (extend-protocol JsonNodeToClj
+  nil
+  (-json-node->clj [_node _opts]
+    nil)
+
   NullNode
+  (-json-node->clj [_node _opts]
+    nil)
+
+  MissingNode
   (-json-node->clj [_node _opts]
     nil)
 

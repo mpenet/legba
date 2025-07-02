@@ -21,8 +21,10 @@
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[query-param-key query-param-val] (:params request)]
       (when-let [query-param-schema (get m-query-params [query-param-key "schema"])]
-        (when-let [errors (schema/validate! schema query-param-schema (pr-str query-param-val))]
-          (throw (ex-info "Invalid query-parameters"
+        (when-let [errors (schema/validate! schema
+                                            query-param-schema
+                                            (pr-str query-param-val))]
+          (throw (ex-info "Invalid Query Parameters"
                           {:type ::invalid-query-parameters
                            :schema m-query-params
                            :errors errors}))))))
@@ -33,8 +35,10 @@
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[path-param-key path-param-val] (:path-params request)]
       (when-let [path-param-schema (get-in m-path-params [path-param-key "schema"])]
-        (when-let [errors (schema/validate! schema path-param-schema (pr-str path-param-val))]
-          (throw (ex-info "Invalid path-parameters"
+        (when-let [errors (schema/validate! schema
+                                            path-param-schema
+                                            (pr-str path-param-val))]
+          (throw (ex-info "Invalid Path Parameters"
                           {:type ::invalid-path-parameters
                            :schema m-path-params
                            :errors (into [] (map str) errors)}))))))

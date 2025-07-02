@@ -58,19 +58,22 @@
 ;;                            {:body [{:id "asd"}]
 ;;                       ;; :headers {"x-next" "asdf"}
 ;;                             })
+;;                          [:put "/pet"]
+;;                          (fn [_request]
+;;                            {:body {:name "yolo-put", :photoUrls []}
+;;                             :status 200})
 ;;                          [:post "/pet"]
 ;;                          (fn [request]
-;;                            (prn :REQUEST request)
-;;                            {:body {:name "yolo", :photoUrls []}
+;;                            {:body {:name "yolo-post", :photoUrls []}
 ;;                             :status 200})}
 ;;                         :schema "schema/oas/3.1/petstore.json"))
 
 ;; (do
 ;;   (prn :_---------------------)
-;;   (h
-;;    {:request-method :post
-;;     :headers {"content-type" "application/json"}
-;;     :uri "/pet"
-;;     :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"}
-;;   ;; {:request-method :get :uri "/pet/2"}
-;;    ))
+;; (h
+;;  {:request-method :put
+;;   :headers {"content-type" "application/json"}
+;;   :uri "/pet"
+;;   :body nil})
+  ;; {:request-method :get :uri "/pet/2"}
+   ;; ))

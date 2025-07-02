@@ -1,4 +1,4 @@
-{:paths ["src" "resources"]
+{:paths ["src"]
 
  :exoscale.project/pom-data
  [[:licenses
@@ -23,7 +23,7 @@
    :jvm-opts ["-Dclojure.main.report=stderr"]
 
    :exec-fn test-runner/run
-   :extra-paths ["test" "dev"]}
+   :extra-paths ["test" "dev" "test/resources"]}
 
   :quickdoc
   {:deps {org.babashka/cli {:mvn/version "0.4.36"}

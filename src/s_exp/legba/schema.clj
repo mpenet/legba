@@ -22,8 +22,8 @@
   (doto (SchemaValidatorsConfig.)
     (.setPreloadJsonSchema true)
     (.setCacheRefs true)
-    (.setFormatAssertionsEnabled true)
-    (.setTypeLoose true)
+    ;; (.setFormatAssertionsEnabled true)
+    ;; (.setTypeLoose true)
     (.setPreloadJsonSchemaRefMaxNestingDepth 40)
     (.setPathType PathType/JSON_PATH)))
 
@@ -51,7 +51,7 @@
           (.defaultMetaSchemaIri (.getIri (OpenApi31/getInstance)))
           (.enableSchemaCache true))))}))
 
-(defn- get-schema
+(defn get-schema
   ^JsonSchema [schema schema-resource-file ptr]
   (.getSchema ^JsonSchemaFactory (:json-schema-factory schema)
               (.resolve (SchemaLocation/of (format "classpath://%s" schema-resource-file))
@@ -61,11 +61,12 @@
 (defn validate!
   [{:as schema :keys [schema-resource-file]} sub-schema val]
   (let [ptr (:json-pointer (meta sub-schema))
-        schema (get-schema schema schema-resource-file ptr)]
-    (time (not-empty
-           (if (instance? JsonNode val)
-             (.validate schema ^JsonNode val
-                        OutputFormat/DEFAULT)
-             (.validate schema ^String val
-                        InputFormat/JSON
-                        OutputFormat/DEFAULT))))))
+        ^JsonSchema schema (get-schema schema schema-resource-file ptr)]
+    ;; (prn :schema sub-schema)
+    (not-empty
+     (if (instance? JsonNode val)
+       (.validate schema ^JsonNode val
+                  OutputFormat/DEFAULT)
+       (.validate schema (or ^String val "")
+                  InputFormat/JSON
+                  OutputFormat/DEFAULT)))))

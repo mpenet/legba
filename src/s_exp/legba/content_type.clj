@@ -22,7 +22,7 @@
 (defn match-schema-content-type
   [schema content-type]
   (let [content (get schema "content")
-        content-types (str/split content-type #";" 1)]
+        content-types (some-> content-type (str/split #";" 1))]
     (reduce (fn [_ content-type]
               (when-let [ret (or (get-in content [content-type "schema"])
                                  (reduce (fn [_ [ct-key ct-val]]

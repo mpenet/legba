@@ -167,11 +167,9 @@
           "description" : "ID of pet that needs to be fetched",
           "required" : true,
           "schema" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "param ID of pet that needs to be fetched",
-            "exclusiveMaximum" : 10,
-            "exclusiveMinimum" : 1
+            "type" : "string",
+            "pattern" : "[0-9]+",
+            "description" : "param ID of pet that needs to be fetched"
           }
         } ],
         "responses" : {
