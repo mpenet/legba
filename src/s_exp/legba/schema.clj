@@ -22,8 +22,8 @@
   (doto (SchemaValidatorsConfig.)
     (.setPreloadJsonSchema true)
     (.setCacheRefs true)
-    ;; (.setFormatAssertionsEnabled true)
-    ;; (.setTypeLoose true)
+    (.setFormatAssertionsEnabled true)
+    (.setTypeLoose true)
     (.setPreloadJsonSchemaRefMaxNestingDepth 40)
     (.setPathType PathType/JSON_PATH)))
 
