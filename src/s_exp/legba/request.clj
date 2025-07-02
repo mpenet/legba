@@ -17,7 +17,7 @@
 (def path-params-schema (match->params-schema-fn "path"))
 
 (defn request->conform-query-params
-  [request schema sub-schema]
+  [request schema sub-schema _opts]
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[query-param-key query-param-val] (:params request)]
       (when-let [query-param-schema (get m-query-params [query-param-key "schema"])]
@@ -29,7 +29,7 @@
   request)
 
 (defn request->conform-path-params
-  [request schema sub-schema]
+  [request schema sub-schema _opts]
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[path-param-key path-param-val] (:path-params request)]
       (when-let [path-param-schema (get-in m-path-params [path-param-key "schema"])]
@@ -41,7 +41,7 @@
   request)
 
 (defn request->conform-body
-  [{:as request :keys [body headers]} schema sub-schema]
+  [{:as request :keys [body headers]} schema sub-schema opts]
   (let [req-body-schema (get sub-schema "requestBody")]
     (if (get req-body-schema "required")
       (let [content-type (get headers "content-type")]
@@ -62,7 +62,7 @@
                                :errors (into [] (map str) errors)})))
             (cond-> request
               json-body
-              (assoc :body (json/json-node->clj body))))
+              (assoc :body (json/json-node->clj body opts))))
           (throw (ex-info "No matching content-type in schema for request"
                           {:type ::invalid-content-type
                            :schema req-body-schema
@@ -70,12 +70,12 @@
       request)))
 
 (defn conform-request
-  [request schema sub-schema]
+  [request schema sub-schema opts]
   ;; validate params
   (-> request
-      (request->conform-path-params schema sub-schema)
-      (request->conform-query-params schema sub-schema)
-      (request->conform-body schema sub-schema)))
+      (request->conform-path-params schema sub-schema opts)
+      (request->conform-query-params schema sub-schema opts)
+      (request->conform-body schema sub-schema opts)))
 
 (ex/derive ::invalid :exoscale.ex/invalid)
 (ex/derive ::invalid-body :exoscale.ex/invalid)

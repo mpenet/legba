@@ -6,28 +6,38 @@
             [s-exp.legba.schema :as schema]))
 
 (defn handler-for-request
-  [handlers {:keys [method path] :as _match}]
+  [handlers {:keys [method path] :as _match} _opts]
   (let [req-key [method path]]
     (or (get handlers req-key)
         (throw (ex-info (format "Handler not defined for request %s"
                                 req-key)
                         {:type ::handler-undefined})))))
 
+(def default-options
+  {:not-found-response {:status 404 :body "Not found"}
+   :key-fn keyword})
+
 (defn openapi-handler
-  [handlers & {:as _opts
-               :keys [schema not-found-response]
-               :or {not-found-response {:status 404 :body "Not found"}}}]
-  (let [schema (schema/load-schema schema)
+  [handlers & {:as opts}]
+  (let [{:as opts :keys [schema not-found-response]}
+        (merge default-options opts)
+        schema (schema/load-schema schema)
         router (router/router schema)]
     (fn [{:as request :keys [request-method uri]}]
-      (if-let [{:as match :keys [sub-schema path-params]} (router/match-route router request-method uri)]
+      (if-let [{:as match :keys [sub-schema path-params]}
+               (router/match-route router request-method uri)]
         (let [request (request/conform-request (cond-> request
                                                  path-params
                                                  (assoc :path-params path-params))
-                                               schema sub-schema)
-              handler (handler-for-request handlers match)
+                                               schema
+                                               sub-schema
+                                               opts)
+              handler (handler-for-request handlers match opts)
               response (handler request)
-              response (response/conform-response response schema sub-schema)]
+              response (response/conform-response response
+                                                  schema
+                                                  sub-schema
+                                                  opts)]
           (vary-meta response dissoc :match :schema))
         not-found-response))))
 

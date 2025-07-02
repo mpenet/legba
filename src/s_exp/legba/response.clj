@@ -9,7 +9,7 @@
   [{:as response
     :keys [status body headers]
     :or {status 200}}
-   schema sub-schema]
+   schema sub-schema _opts]
   (let [ct-schema (or (get-in sub-schema ["responses" (str status)])
                       (get-in sub-schema ["responses" "default"]))
         content-type (or (some-> headers (update-keys str/lower-case) (get "content-type"))
@@ -42,13 +42,13 @@
 
 (defn conform-response-headers
   [{:as response :keys [status] :or {status 200}}
-   schema sub-schema]
-
+   schema sub-schema _opts]
   (when-let [headers-schema (or (some-> sub-schema (get-in ["responses" (str status) "headers"]))
                                 (some-> sub-schema (get-in ["responses" "default" "headers"])))]
     (doseq [[header-name header-schema] headers-schema
             :let [header-val (get-in response [:headers header-name])]]
-      (when-let [errors (schema/validate! schema header-schema (pr-str header-val))]
+      (when-let [errors (schema/validate! schema header-schema
+                                          (pr-str header-val))]
         (throw (ex-info (format "Invalid Response Header: %s:%s"
                                 header-name
                                 header-val)
@@ -58,10 +58,10 @@
   response)
 
 (defn conform-response
-  [response schema sub-schema]
+  [response schema sub-schema opts]
   (-> response
-      (conform-response-headers schema sub-schema)
-      (conform-response-body schema sub-schema)))
+      (conform-response-headers schema sub-schema opts)
+      (conform-response-body schema sub-schema opts)))
 
 (ex/derive ::invalid-header :exoscale.ex/invalid)
 (ex/derive ::invalid-body :exoscale.ex/invalid)
