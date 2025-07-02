@@ -1,4 +1,4 @@
-# OpenAPI library for building clojure/RING services
+# Clojure library for building OpenAPI services
 
 WIP: Here be dragons, it's not finished (yet)
 
