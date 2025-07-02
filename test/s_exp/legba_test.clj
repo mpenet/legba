@@ -61,7 +61,3 @@
   ;;                       (h {:request-method :get
   ;;                           :uri "/pet/2"})))
   )
-;; (do (h {:request-method :post
-;;         :headers {"content-type" "application/json"}
-;;         :uri "/pet"
-;;         :body "{\"id\": 1, \"name\":\"foo\", \"photoUrls\": []}"}))
