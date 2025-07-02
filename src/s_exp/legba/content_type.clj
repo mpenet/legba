@@ -4,20 +4,21 @@
 
 (defn- match?
   [ptn s]
-  (loop [[ptn0 & ptn :as rptn] ptn
-         [s0 & s :as rs] s]
-    (cond
-      (and (zero? (count ptn))
-           (zero? (count s)))
-      true
+  (or (= ptn s)
+      (loop [[ptn0 & ptn :as rptn] ptn
+             [s0 & s :as rs] s]
+        (cond
+          (and (zero? (count ptn))
+               (zero? (count s)))
+          true
 
-      (= ptn0 s0)
-      (recur ptn s)
+          (= ptn0 s0)
+          (recur ptn s)
 
-      (and (= ptn0 \*) s0)
-      (or
-       (match? ptn rs)
-       (recur rptn s)))))
+          (and (= ptn0 \*) s0)
+          (or
+           (match? ptn rs)
+           (recur rptn s))))))
 
 (defn match-schema-content-type
   [schema content-type]
