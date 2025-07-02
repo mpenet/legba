@@ -52,13 +52,14 @@
 ;;                             })
 ;;                          [:post "/pet"]
 ;;                          (fn [_request]
-;;                            {:body (charred/write-json-str {:name "yolo", :photoUrls []})
+;;                            {:body {"name" "yolo", "photoUrls" []}
 ;;                             :status 200})}
 ;;                         :schema "schema/oas/3.1/petstore.json"))
 
-;; (h {:request-method :get :uri "/pet/2"})
-
-;; {:request-method :post
-;;  :headers {:content-type "application/json"}
-;;  :uri "/pet"
-;;  :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"}
+;; (h
+;;  {:request-method :post
+;;   :headers {"content-type" "application/json"}
+;;   :uri "/pet"
+;;   :body "{\"name\": \"asdf\", \"id\":1, \"photoUrls\": []}"}
+;;  ;; {:request-method :get :uri "/pet/2"}
+;;  )

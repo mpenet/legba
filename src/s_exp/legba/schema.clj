@@ -2,7 +2,8 @@
   (:require [charred.api :as charred]
             [clojure.java.io :as io]
             [s-exp.legba.json-pointer :as json-pointer])
-  (:import (com.networknt.schema JsonSchemaFactory
+  (:import (com.fasterxml.jackson.databind ObjectMapper JsonNode)
+           (com.networknt.schema JsonSchemaFactory
                                  SchemaValidatorsConfig
                                  InputFormat
                                  OutputFormat
@@ -57,6 +58,10 @@
   [{:as schema :keys [schema-resource-file]} sub-schema val]
   (let [ptr (:json-pointer (meta sub-schema))
         schema (get-schema schema schema-resource-file ptr)]
-    (time (not-empty (.validate schema val
-                                InputFormat/JSON
-                                OutputFormat/DEFAULT)))))
+    (time (not-empty
+           (if (instance? JsonNode val)
+             (.validate schema ^JsonNode val
+                        OutputFormat/DEFAULT)
+             (.validate schema ^String val
+                        InputFormat/JSON
+                        OutputFormat/DEFAULT))))))
