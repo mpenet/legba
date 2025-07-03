@@ -42,7 +42,7 @@
 
 (defn openapi-handler*
   [handlers & {:as opts}]
-  (let [{:as opts :keys [schema not-found-response error-middleware]}
+  (let [{:as opts :keys [schema not-found-response]}
         (merge default-options opts)
         schema (schema/load-schema schema)
         router (router/router schema opts)]
