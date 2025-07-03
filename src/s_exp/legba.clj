@@ -30,35 +30,45 @@
      :content-type "application/json"
      :body (assoc data :message (ex-message e))}))
 
-(defn openapi-handler
+(defn wrap-error-response
+  [handler]
+  (fn [req]
+    (ex/try+
+      (handler req)
+      #_{:clj-kondo/ignore [:unresolved-symbol]}
+      (catch :exoscale.ex/invalid _
+        #_{:clj-kondo/ignore [:unresolved-symbol]}
+        (ex->response &ex)))))
+
+(defn openapi-handler*
   [handlers & {:as opts}]
-  (let [{:as opts :keys [schema not-found-response]}
+  (let [{:as opts :keys [schema not-found-response error-middleware]}
         (merge default-options opts)
         schema (schema/load-schema schema)
         router (router/router schema opts)]
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as match :keys [sub-schema path-params]}
                (router/match-route router request-method uri)]
-        (ex/try+
-          (let [request (request/conform-request
-                         (cond-> request
-                           path-params
-                           (assoc :path-params path-params))
-                         schema
-                         sub-schema
-                         opts)
-                handler (handler-for-request handlers match opts)
-                response (handler request)
-                response (response/conform-response response
-                                                    schema
-                                                    sub-schema
-                                                    opts)]
-            (vary-meta response dissoc :match :schema))
-          #_{:clj-kondo/ignore [:unresolved-symbol]}
-          (catch :exoscale.ex/invalid _
-            #_{:clj-kondo/ignore [:unresolved-symbol]}
-            (ex->response &ex)))
+        (let [request (request/conform-request
+                       (cond-> request
+                         path-params
+                         (assoc :path-params path-params))
+                       schema
+                       sub-schema
+                       opts)
+              handler (handler-for-request handlers match opts)
+              response (handler request)
+              response (response/conform-response response
+                                                  schema
+                                                  sub-schema
+                                                  opts)]
+          (vary-meta response dissoc :match :schema))
         not-found-response))))
+
+(defn openapi-handler
+  [handlers & {:as opts}]
+  (-> (openapi-handler* handlers opts)
+      wrap-error-response))
 
 (ex/derive ::invalid :exoscale.ex/invalid)
 (ex/derive ::handler-undefined :exoscale.ex/fault)
