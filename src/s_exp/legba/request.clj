@@ -17,35 +17,37 @@
 (def path-params-schema (match->params-schema-fn "path"))
 
 (defn request->conform-query-params
-  [request schema sub-schema _opts]
+  [request schema sub-schema {:as opts :keys [query-string-params-key]}]
   (when-let [m-query-params (query-params-schema sub-schema)]
-    ;; FIXME we need to iterate over the schema not the values and we must also
-    ;; check for required
-    (doseq [[query-param-key query-param-val] (:params request)]
-      (when-let [query-param-schema (get m-query-params [query-param-key "schema"])]
-        (when-let [errors (schema/validate! schema
-                                            query-param-schema
-                                            (pr-str query-param-val))]
-          (throw (ex-info "Invalid Query Parameters"
-                          {:type ::invalid-query-parameters
-                           :schema m-query-params
-                           :errors errors}))))))
+    (doseq [[schema-key {:as query-schema :strs [required]}] m-query-params
+            :let [param-val (get-in request [query-string-params-key
+                                             schema-key]
+                                    ::missing)
+                  _ (when (and required (= ::missing param-val))
+                      (throw (ex-info "Missing Required Query Parameter"
+                                      {:type ::missing-query-parameter
+                                       :schema query-schema})))]]
+      (when-let [errors (schema/validate! schema
+                                          (get query-schema "schema")
+                                          (pr-str (or param-val "")))]
+        (throw (ex-info "Invalid Query Parameters"
+                        {:type ::invalid-query-parameters
+                         :schema m-query-params
+                         :errors errors})))))
   request)
 
 (defn request->conform-path-params
   [request schema sub-schema _opts]
   (when-let [m-path-params (path-params-schema sub-schema)]
-    ;; FIXME we need to iterate over the schema not the values and we must also
-    ;; check for required
-    (doseq [[path-param-key path-param-val] (:path-params request)]
-      (when-let [path-param-schema (get-in m-path-params [path-param-key "schema"])]
-        (when-let [errors (schema/validate! schema
-                                            path-param-schema
-                                            (pr-str path-param-val))]
-          (throw (ex-info "Invalid Path Parameters"
-                          {:type ::invalid-path-parameters
-                           :schema m-path-params
-                           :errors (into [] (map str) errors)}))))))
+    (doseq [[schema-key param-schema] m-path-params
+            :let [param-val (get-in request [:path-params schema-key])]]
+      (when-let [errors (schema/validate! schema
+                                          (get param-schema "schema")
+                                          (pr-str param-val))]
+        (throw (ex-info "Invalid Path Parameters"
+                        {:type ::invalid-path-parameters
+                         :schema m-path-params
+                         :errors errors})))))
   request)
 
 (defn request->conform-body

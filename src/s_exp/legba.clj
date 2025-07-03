@@ -15,7 +15,8 @@
 
 (def default-options
   {:not-found-response {:status 404 :body "Not found"}
-   :key-fn keyword})
+   :key-fn keyword
+   :query-string-params-key [:params]})
 
 (defn openapi-handler
   [handlers & {:as opts}]
@@ -26,12 +27,14 @@
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as match :keys [sub-schema path-params]}
                (router/match-route router request-method uri)]
-        (let [request (request/conform-request (cond-> request
-                                                 path-params
-                                                 (assoc :path-params path-params))
-                                               schema
-                                               sub-schema
-                                               opts)
+        (let [request (request/conform-request
+                       (cond-> request
+                         path-params
+                         (assoc :path-params path-params))
+                       schema
+                       sub-schema
+                       opts)
+              _ (prn :match match)
               handler (handler-for-request handlers match opts)
               response (handler request)
               response (response/conform-response response

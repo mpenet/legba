@@ -34,21 +34,19 @@
                       [:get "/items"]
                       (fn [_request] {:body list-items-response})
                       [:get "/search"]
-                      (fn [_request] {:body list-items-response})
+                      (fn [_request] {:body search-items-response})
                       [:post "/items"] (fn [_request] post-items-response)}
                      :schema "schema/oas/3.1/petstore.json"))
-
-((make-handler {}) {:request-method :get :uri (str "/search")})
 
 (deftest requests-test
   (let [h (make-handler {})]
     (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
 
     (is (thrown-with-msg? clojure.lang.ExceptionInfo
-                          #"Invalid Path Parameters"
-                          (h {:request-method :get :uri "/item/a"})))
+                          #"Invalid Path Parameter"
+                          (h {:request-method :get :uri "/item/ab"})))
 
-    (is (string? (:body (h {:request-method :get :uri (str "/pet/" item-id)}))))
+    (is (string? (:body (h {:request-method :get :uri (str "/item/" item-id)}))))
 
     (is (= 201
            (:status (h {:request-method :post
@@ -70,8 +68,12 @@
                               :uri "/items"
                               :body "{\"name\": \"asdf\", \"value\":1}"})))
 
- ;; (is (thrown-with-msg? clojure.lang.ExceptionInfo
- ;;                       #"Invalid Response Body"
- ;;                       (h {:request-method :get
- ;;                           :uri "/pet/2"})))
-    ))
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Missing Required Query Parameter"
+                          (h {:request-method :get
+                              :uri "/search"
+                              :params {}})))
+
+    (is (h {:request-method :get
+            :uri "/search"
+            :params {:term "yolo"}}))))
