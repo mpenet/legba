@@ -64,13 +64,15 @@
 
 (defn validation-result
   [^ValidationResult r]
-  (into []
-        (map (fn [^ValidationMessage m]
-               {:type (.getType m)
-                :path (.toString (.getInstanceLocation m))
-                :error (.getError m)
-                :message (.getMessage m)}))
-        (.getValidationMessages r)))
+  (let [vms (.getValidationMessages r)]
+    (when-not (empty? vms)
+      (into []
+            (map (fn [^ValidationMessage m]
+                   (let [] {:type (.getType m)
+                            :path (.toString (.getInstanceLocation m))
+                            :error (.getError m)
+                            :message (.getMessage m)})))
+            vms))))
 
 (defn validate!
   [{:as schema :keys [schema-resource-file]} sub-schema val
@@ -82,7 +84,7 @@
     (validation-result
      (if (instance? JsonNode val)
        (.validate schema ^JsonNode val
-                  OutputFormat/DEFAULT)
+                  OutputFormat/RESULT)
        (.validate schema (or ^String val "")
                   InputFormat/JSON
                   OutputFormat/RESULT)))))
