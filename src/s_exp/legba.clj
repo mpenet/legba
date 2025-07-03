@@ -16,7 +16,19 @@
 (def default-options
   {:not-found-response {:status 404 :body "Not found"}
    :key-fn keyword
-   :query-string-params-key [:params]})
+   :query-string-params-key :params})
+
+(defmulti ex->response
+  #(some-> % ex/ex-type)
+  :hierarchy ex/hierarchy)
+
+(defmethod ex->response
+  :s-exp.legba/invalid
+  [e]
+  (let [data (ex-data e)]
+    {:status 400
+     :content-type "application/json"
+     :body (assoc data :message (ex-message e))}))
 
 (defn openapi-handler
   [handlers & {:as opts}]
@@ -27,23 +39,28 @@
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as match :keys [sub-schema path-params]}
                (router/match-route router request-method uri)]
-        (let [request (request/conform-request
-                       (cond-> request
-                         path-params
-                         (assoc :path-params path-params))
-                       schema
-                       sub-schema
-                       opts)
-              _ (prn :match match)
-              handler (handler-for-request handlers match opts)
-              response (handler request)
-              response (response/conform-response response
-                                                  schema
-                                                  sub-schema
-                                                  opts)]
-          (vary-meta response dissoc :match :schema))
+        (ex/try+
+          (let [request (request/conform-request
+                         (cond-> request
+                           path-params
+                           (assoc :path-params path-params))
+                         schema
+                         sub-schema
+                         opts)
+                handler (handler-for-request handlers match opts)
+                response (handler request)
+                response (response/conform-response response
+                                                    schema
+                                                    sub-schema
+                                                    opts)]
+            (vary-meta response dissoc :match :schema))
+          #_{:clj-kondo/ignore [:unresolved-symbol]}
+          (catch :exoscale.ex/invalid _
+            #_{:clj-kondo/ignore [:unresolved-symbol]}
+            (ex->response &ex)))
         not-found-response))))
 
+(ex/derive ::invalid :exoscale.ex/invalid)
 (ex/derive ::handler-undefined :exoscale.ex/fault)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -17,16 +17,19 @@
 (def path-params-schema (match->params-schema-fn "path"))
 
 (defn request->conform-query-params
-  [request schema sub-schema {:as opts :keys [query-string-params-key]}]
+  [request schema sub-schema {:as _opts :keys [query-string-params-key]}]
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[schema-key {:as query-schema :strs [required]}] m-query-params
             :let [param-val (get-in request [query-string-params-key
                                              schema-key]
                                     ::missing)
+                  _ (prn :req request :k schema-key :o [query-string-params-key
+                                                        schema-key])
                   _ (when (and required (= ::missing param-val))
                       (throw (ex-info "Missing Required Query Parameter"
                                       {:type ::missing-query-parameter
                                        :schema query-schema})))]]
+
       (when-let [errors (schema/validate! schema
                                           (get query-schema "schema")
                                           (pr-str (or param-val "")))]
@@ -87,8 +90,9 @@
       (request->conform-query-params schema sub-schema opts)
       (request->conform-body schema sub-schema opts)))
 
-(ex/derive ::invalid :exoscale.ex/invalid)
-(ex/derive ::invalid-body :exoscale.ex/invalid)
-(ex/derive ::invalid-path-parameters :exoscale.ex/invalid)
-(ex/derive ::invalid-query-parameters :exoscale.ex/invalid)
-(ex/derive ::invalid-content-type :exoscale.ex/invalid)
+(ex/derive ::invalid :s-exp.legba/invalid)
+(ex/derive ::invalid-body :s-exp.legba/invalid)
+(ex/derive ::invalid-path-parameters :s-exp.legba/invalid)
+(ex/derive ::invalid-query-parameters :s-exp.legba/invalid)
+(ex/derive ::invalid-content-type :s-exp.legba/invalid)
+(ex/derive ::missing-query-parameter :s-exp.legba/invalid)

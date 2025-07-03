@@ -63,5 +63,5 @@
       (conform-response-headers schema sub-schema opts)
       (conform-response-body schema sub-schema opts)))
 
-(ex/derive ::invalid-header :exoscale.ex/invalid)
-(ex/derive ::invalid-body :exoscale.ex/invalid)
+(ex/derive ::invalid-header :s-exp.legba/invalid)
+(ex/derive ::invalid-body :s-exp.legba/invalid)

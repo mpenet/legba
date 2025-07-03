@@ -20,7 +20,8 @@
             :name "foo"
             :value 1.0}]}
          search-items-response
-         {:body
+         {:status 200
+          :body
           [{:id item-id
             :name "foo"
             :value 1.0}]}
@@ -32,19 +33,35 @@
   (l/openapi-handler {[:get "/item/{itemId}"]
                       (fn [_request] item-by-id-response)
                       [:get "/items"]
-                      (fn [_request] {:body list-items-response})
+                      (fn [_request] list-items-response)
                       [:get "/search"]
-                      (fn [_request] {:body search-items-response})
+                      (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)}
                      :schema "schema/oas/3.1/petstore.json"))
+
+;; ((make-handler {}) {:request-method :get :uri "/item/ab"})
 
 (deftest requests-test
   (let [h (make-handler {})]
     (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
 
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo
-                          #"Invalid Path Parameter"
-                          (h {:request-method :get :uri "/item/ab"})))
+    (is (= {:status 400,
+            :content-type "application/json",
+            :body
+            {:type :s-exp.legba.request/invalid-path-parameters,
+             :schema
+             {:itemId
+              {"schema" {"format" "uuid"},
+               "name" "itemId",
+               "style" "simple",
+               "explode" false,
+               "required" true,
+               "description" "ID of the item to retrieve.",
+               "in" "path"}},
+             :errors
+             ["$: does not match the uuid pattern must be a valid RFC 4122 UUID"]
+             :message "Invalid Path Parameters"}}
+           (h {:request-method :get :uri "/item/ab"})))
 
     (is (string? (:body (h {:request-method :get :uri (str "/item/" item-id)}))))
 
@@ -54,26 +71,73 @@
                         :uri "/items"
                         :body "{\"name\": \"asdf\", \"value\":1}"}))))
 
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo
-                          #"No matching content-type in schema"
-                          (h {:request-method :post
-                              :headers {"content-type" "application/boom"}
-                              :uri "/items"
-                              :body "{\"name\": \"asdf\", \"value\":1}"})))
+    (is (= {:status 400,
+            :content-type "application/json",
+            :body
+            {:type :s-exp.legba.request/invalid-content-type,
+             :schema
+             {"content"
+              {"application/json"
+               {"schema"
+                {"properties"
+                 {"name" {"description" "Name of the new item."},
+                  "value"
+                  {"description" "Numerical value for the new item.",
+                   "format" "float"}},
+                 "required" ["name" "value"]},
+                "examples"
+                {"newItem"
+                 {"summary" "Example of a new item to create",
+                  "value" {"name" "New Item C", "value" 15.75}}}}},
+              "required" true},
+             :message "No matching content-type in schema for request"}}
+           (h {:request-method :post
+               :headers {"content-type" "application/boom"}
+               :uri "/items"
+               :body "{\"name\": \"asdf\", \"value\":1}"})))
 
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo
-                          #"No matching content-type in schema"
-                          (h {:request-method :post
-                              :headers {"content-type" "application/boom"}
-                              :uri "/items"
-                              :body "{\"name\": \"asdf\", \"value\":1}"})))
+    (is (= {:status 400,
+            :content-type "application/json",
+            :body
+            {:type :s-exp.legba.request/invalid-content-type,
+             :schema
+             {"content"
+              {"application/json"
+               {"schema"
+                {"properties"
+                 {"name" {"description" "Name of the new item."},
+                  "value"
+                  {"description" "Numerical value for the new item.",
+                   "format" "float"}},
+                 "required" ["name" "value"]},
+                "examples"
+                {"newItem"
+                 {"summary" "Example of a new item to create",
+                  "value" {"name" "New Item C", "value" 15.75}}}}},
+              "required" true},
+             :message "No matching content-type in schema for request"}}
+           (h {:request-method :post
+               :headers {"content-type" "application/boom"}
+               :uri "/items"
+               :body "{\"name\": \"asdf\", \"value\":1}"})))
 
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo
-                          #"Missing Required Query Parameter"
-                          (h {:request-method :get
-                              :uri "/search"
-                              :params {}})))
+    (is (= {:status 400,
+            :content-type "application/json",
+            :body
+            {:type :s-exp.legba.request/missing-query-parameter,
+             :schema
+             {"schema" {},
+              "name" "term",
+              "style" "form",
+              "explode" true,
+              "required" true,
+              "description" "Search term",
+              "in" "query"},
+             :message "Missing Required Query Parameter"}}
+           (h {:request-method :get
+               :uri "/search"
+               :params {}})))
 
-    (is (h {:request-method :get
-            :uri "/search"
-            :params {:term "yolo"}}))))
+    (is (= 200 (:status (h {:request-method :get
+                            :uri "/search"
+                            :params {:term "yolo"}}))))))

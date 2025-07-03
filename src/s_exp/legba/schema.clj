@@ -63,9 +63,11 @@
   (let [ptr (:json-pointer (meta sub-schema))
         ^JsonSchema schema (get-schema schema schema-resource-file ptr)]
     (not-empty
-     (if (instance? JsonNode val)
-       (.validate schema ^JsonNode val
-                  OutputFormat/DEFAULT)
-       (.validate schema (or ^String val "")
-                  InputFormat/JSON
-                  OutputFormat/DEFAULT)))))
+     (into []
+           (map str)
+           (if (instance? JsonNode val)
+             (.validate schema ^JsonNode val
+                        OutputFormat/DEFAULT)
+             (.validate schema (or ^String val "")
+                        InputFormat/JSON
+                        OutputFormat/DEFAULT))))))
