@@ -1,31 +1,45 @@
 # Clojure library for building OpenAPI services
 
-WIP: Here be dragons, it's not finished (yet)
+/!\ WIP: Here be dragons, it's not finished (but it's close).
 
-legba is a library aimed at building OpenApi(3.1) services in Clojure. It
-leverages
+*Legba* is a library aimed at building **fully OpenApi 3.1 compliant** services
+in Clojure.
+
+It leverages
 [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator)
 for the schema validation part, ensuring [full, up-to-date and extensive
 coverage](https://www.creekservice.org/json-schema-validation-comparison/functional)
 of the spec, not to mention [great
 performance](https://www.creekservice.org/json-schema-validation-comparison/performance).
 
-legba works by allowing you to construct a RING handler that will handle all
-openapi requests and the associated routing that you can then plug to whatever
-server adapter you are using.
+*Legba* works by allowing you to construct a RING handler from an openapi json
+file, that handler will be aware of the routing necesary and perform all the
+checks that you specified via the openapi file provided .
 
-This handler is created from an openapi json file that you pass to it and a map
-keyed by `[method path]` to handler function that will be used to dispatch your
-requests to their associated handler;. Requests **and** Responses will be
-validated against the schema, covering all aspects of the spec such as body
-contents, path parameters, query-string parameters, headers, status codes,
-etc...
+Requests **and** Responses will be validated fully against the schema, covering
+all aspects of the spec such as body contents, path parameters, query-string
+parameters, headers, status codes, etc... Upon errors it will return an error
+message with details about the failure and part of the schema concerned.
 
-What it doesn't aim to do and will not do:
+What it doesn't aim to do (at this time):
 
-* Coercing payloads
+* Coercing payloads (ex: uuids, they get validated but you get a string)
+
 * Supporting other means of validation, it's intentionally limited by what
-  json-schema allows you to express
+  json-schema allows you to express and is agnostic of any clojure specific
+  validation framework.
+  
+## Installation 
+
+For now it's tools.deps only until an alpha is out.
+
+```clj 
+{com.s-exp/legba {:git/sha "..."}
+```
+
+## Usage 
+
+TODO
 
 ## License
 
