@@ -10,7 +10,10 @@
                                  InputFormat
                                  OutputFormat
                                  SchemaLocation)
-           (com.networknt.schema SpecVersion$VersionFlag PathType)
+           (com.networknt.schema ValidationResult
+                                 ValidationMessage
+                                 SpecVersion$VersionFlag
+                                 PathType)
            (com.networknt.schema.oas OpenApi31)
            (io.swagger.v3.core.util Json)
            (io.swagger.v3.parser OpenAPIV3Parser)
@@ -33,7 +36,8 @@
         parse-options (doto (ParseOptions.)
                         (.setResolveFully true)
                         (.setValidateExternalRefs true))
-        json-schema-raw (-> (.readContents (OpenAPIV3Parser.) schema-str
+        json-schema-raw (-> (.readContents (OpenAPIV3Parser.)
+                                           schema-str
                                            nil
                                            parse-options)
                             (Json/pretty)
@@ -58,16 +62,27 @@
                         (str "#" ptr))
               ^SchemaValidatorsConfig schema-validator-config))
 
+(defn validation-result
+  [^ValidationResult r]
+  (into []
+        (map (fn [^ValidationMessage m]
+               {:type (.getType m)
+                :path (.toString (.getInstanceLocation m))
+                :error (.getError m)
+                :message (.getMessage m)}))
+        (.getValidationMessages r)))
+
 (defn validate!
-  [{:as schema :keys [schema-resource-file]} sub-schema val]
+  [{:as schema :keys [schema-resource-file]} sub-schema val
+   & {:as _opts
+      :keys [validation-result]
+      :or {validation-result validation-result}}]
   (let [ptr (:json-pointer (meta sub-schema))
         ^JsonSchema schema (get-schema schema schema-resource-file ptr)]
-    (not-empty
-     (into []
-           (map str)
-           (if (instance? JsonNode val)
-             (.validate schema ^JsonNode val
-                        OutputFormat/DEFAULT)
-             (.validate schema (or ^String val "")
-                        InputFormat/JSON
-                        OutputFormat/DEFAULT))))))
+    (validation-result
+     (if (instance? JsonNode val)
+       (.validate schema ^JsonNode val
+                  OutputFormat/DEFAULT)
+       (.validate schema (or ^String val "")
+                  InputFormat/JSON
+                  OutputFormat/RESULT)))))

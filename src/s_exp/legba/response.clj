@@ -9,7 +9,7 @@
   [{:as response
     :keys [status body headers]
     :or {status 200}}
-   schema sub-schema _opts]
+   schema sub-schema opts]
   (let [ct-schema (or (get-in sub-schema ["responses" (str status)])
                       (get-in sub-schema ["responses" "default"]))
         content-type (or (some-> headers (update-keys str/lower-case) (get "content-type"))
@@ -26,7 +26,8 @@
             body (cond-> body json-body json/clj->json-node)]
         (when-let [errors (schema/validate! schema
                                             body-schema
-                                            body)]
+                                            body
+                                            opts)]
           (throw (ex-info "Invalid Response Body"
                           {:type ::invalid-body
                            :schema body-schema
@@ -42,13 +43,14 @@
 
 (defn conform-response-headers
   [{:as response :keys [status] :or {status 200}}
-   schema sub-schema _opts]
+   schema sub-schema opts]
   (when-let [headers-schema (or (some-> sub-schema (get-in ["responses" (str status) "headers"]))
                                 (some-> sub-schema (get-in ["responses" "default" "headers"])))]
     (doseq [[header-name header-schema] headers-schema
             :let [header-val (get-in response [:headers header-name])]]
       (when-let [errors (schema/validate! schema header-schema
-                                          (pr-str header-val))]
+                                          (pr-str header-val)
+                                          opts)]
         (throw (ex-info (format "Invalid Response Header: %s:%s"
                                 header-name
                                 header-val)

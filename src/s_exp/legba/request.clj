@@ -17,14 +17,12 @@
 (def path-params-schema (match->params-schema-fn "path"))
 
 (defn request->conform-query-params
-  [request schema sub-schema {:as _opts :keys [query-string-params-key]}]
+  [request schema sub-schema {:as opts :keys [query-string-params-key]}]
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[schema-key {:as query-schema :strs [required]}] m-query-params
             :let [param-val (get-in request [query-string-params-key
                                              schema-key]
                                     ::missing)
-                  _ (prn :req request :k schema-key :o [query-string-params-key
-                                                        schema-key])
                   _ (when (and required (= ::missing param-val))
                       (throw (ex-info "Missing Required Query Parameter"
                                       {:type ::missing-query-parameter
@@ -32,7 +30,8 @@
 
       (when-let [errors (schema/validate! schema
                                           (get query-schema "schema")
-                                          (pr-str (or param-val "")))]
+                                          (pr-str (or param-val ""))
+                                          opts)]
         (throw (ex-info "Invalid Query Parameters"
                         {:type ::invalid-query-parameters
                          :schema m-query-params
@@ -40,13 +39,14 @@
   request)
 
 (defn request->conform-path-params
-  [request schema sub-schema _opts]
+  [request schema sub-schema opts]
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[schema-key param-schema] m-path-params
             :let [param-val (get-in request [:path-params schema-key])]]
       (when-let [errors (schema/validate! schema
                                           (get param-schema "schema")
-                                          (pr-str param-val))]
+                                          (pr-str param-val)
+                                          opts)]
         (throw (ex-info "Invalid Path Parameters"
                         {:type ::invalid-path-parameters
                          :schema m-path-params
@@ -68,7 +68,8 @@
                 body (cond-> body json-body json/str->json-node)]
             (when-let [errors (schema/validate! schema
                                                 body-schema
-                                                body)]
+                                                body
+                                                opts)]
               (throw (ex-info "Invalid Request Body"
                               {:type ::invalid-body
                                :schema body-schema
