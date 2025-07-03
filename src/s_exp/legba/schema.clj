@@ -62,7 +62,6 @@
   [{:as schema :keys [schema-resource-file]} sub-schema val]
   (let [ptr (:json-pointer (meta sub-schema))
         ^JsonSchema schema (get-schema schema schema-resource-file ptr)]
-    ;; (prn :schema sub-schema)
     (not-empty
      (if (instance? JsonNode val)
        (.validate schema ^JsonNode val
