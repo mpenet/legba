@@ -59,7 +59,12 @@
                "description" "ID of the item to retrieve.",
                "in" "path"}},
              :errors
-             ["$: does not match the uuid pattern must be a valid RFC 4122 UUID"]
+             [{:type "format",
+               :path "$",
+               :error
+               "does not match the uuid pattern must be a valid RFC 4122 UUID",
+               :message
+               "$: does not match the uuid pattern must be a valid RFC 4122 UUID"}]
              :message "Invalid Path Parameters"}}
            (h {:request-method :get :uri "/item/ab"})))
 
