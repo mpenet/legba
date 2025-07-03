@@ -72,38 +72,3 @@
 
 (ex/derive ::invalid :exoscale.ex/invalid)
 (ex/derive ::handler-undefined :exoscale.ex/fault)
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;;;; Playground                                                             ;;;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; ;; "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/refs/heads/main/examples/v3.0/petstore.json"
-
-;; (def h (openapi-handler {[:get "/pet/{petId}"]
-;;                          (fn [_request]
-;;                            {:body {:id 1
-;;                                    :name "foo"}})
-;;                          [:get "/pets"]
-;;                          (fn [_request]
-;;                            {:body [{:id "asd"}]
-;;                       ;; :headers {"x-next" "asdf"}
-;;                             })
-;;                          [:put "/pet"]
-;;                          (fn [_request]
-;;                            {:body {:name "yolo-put", :photoUrls []}
-;;                             :status 200})
-;;                          [:post "/pet"]
-;;                          (fn [request]
-;;                            {:body {:name "yolo-post", :photoUrls []}
-;;                             :status 200})}
-;;                         :schema "schema/oas/3.1/petstore.json"))
-
-;; (do
-;;   (prn :_---------------------)
-;; (h
-;;  {:request-method :put
-;;   :headers {"content-type" "application/json"}
-;;   :uri "/pet"
-;;   :body nil})
-  ;; {:request-method :get :uri "/pet/2"}
-   ;; ))
