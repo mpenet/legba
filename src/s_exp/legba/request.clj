@@ -19,6 +19,8 @@
 (defn request->conform-query-params
   [request schema sub-schema _opts]
   (when-let [m-query-params (query-params-schema sub-schema)]
+    ;; FIXME we need to iterate over the schema not the values and we must also
+    ;; check for required
     (doseq [[query-param-key query-param-val] (:params request)]
       (when-let [query-param-schema (get m-query-params [query-param-key "schema"])]
         (when-let [errors (schema/validate! schema
@@ -33,6 +35,8 @@
 (defn request->conform-path-params
   [request schema sub-schema _opts]
   (when-let [m-path-params (path-params-schema sub-schema)]
+    ;; FIXME we need to iterate over the schema not the values and we must also
+    ;; check for required
     (doseq [[path-param-key path-param-val] (:path-params request)]
       (when-let [path-param-schema (get-in m-path-params [path-param-key "schema"])]
         (when-let [errors (schema/validate! schema

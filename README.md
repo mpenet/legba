@@ -21,7 +21,6 @@ validated against the schema, covering all aspects of the spec such as body
 contents, path parameters, query-string parameters, headers, status codes,
 etc...
 
-
 What it doesn't aim to do and will not do:
 
 * Coercing payloads
