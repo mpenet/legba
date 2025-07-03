@@ -7,10 +7,10 @@ in Clojure.
 
 It leverages
 [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator)
-for the schema validation part, ensuring [full, up-to-date and extensive
-coverage](https://www.creekservice.org/json-schema-validation-comparison/functional)
-of the spec, not to mention [great
-performance](https://www.creekservice.org/json-schema-validation-comparison/performance).
+for the schema validation part, ensuring **[complete and up-to-date spec
+compliance](https://www.creekservice.org/json-schema-validation-comparison/functional)**,
+not to mention **[great
+performance](https://www.creekservice.org/json-schema-validation-comparison/performance)**.
 
 *Legba* works by allowing you to construct a RING handler from an openapi json
 file, that handler will be aware of the routing necesary and perform all the
