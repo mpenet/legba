@@ -1,4 +1,6 @@
-# Clojure library for building OpenAPI services
+# Legba 
+
+<img src="https://github.com/user-attachments/assets/7b36b294-8ada-4ef6-bbcc-4e9be4b101f7" width="100" height="100" style="float:left;">
 
 /!\ WIP: Here be dragons, it's not finished (but it's close).
 
