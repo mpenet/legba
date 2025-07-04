@@ -41,7 +41,58 @@ com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
 
 ## Usage 
 
-TODO
+``` clj
+
+(require '[s-exp.legba :as l])
+
+(l/openapi-handler {[:get "/item/{itemId}"]
+                    (fn [_request]
+                      {...})
+                    [:get "/items"]
+                    (fn [_request]
+                      {...})
+                    [:get "/search"]
+                    (fn [_request]
+                      {...})
+                    [:post "/items"]
+                    (fn [_request]
+                      {..})}
+                   ;; path to a resource file
+                   :schema "schema/oas/3.1/catalog.json")
+```
+
+There's also an extra argument with options:
+
+* `:not-found-response` - defaults to `{:status 404 :body "Not found"}`
+
+* `:key-fn` - Control map keys decoding when turning jackson JsonNodes to clj
+  data for the handler - default to `keyword`
+  
+* `:query-string-params-key` - where to find the decoded query-string
+  parameters - defaults to `:params`
+  
+* `:validation-result` - function that controls how to turn
+  `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+  to `s-exp.legba.schema/validation-result`
+  
+* `:extra-routes` - extra routes to be passed to the underlying reitit router
+  (using `{:syntax :bracket}`)
+  
+  
+### Notes
+
+You don't have to do any JSON marshaling, if the content-type is
+application/json we will read data as such, same goes for writing. Given the
+validation library needs the data to be parsed, we preserve this work and re-use
+the parsed content as much as possible. networknt/json-schema-validator relies
+heavily on Jackson, so we re-use facilites provided by it.
+
+Currently routing is performed via reitit, but we don't want to tie ourselves to
+it longer term, so that might change eventually.
+
+### Api 
+
+[api docs](api.md)
 
 ## License
 

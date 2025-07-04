@@ -4,8 +4,7 @@
   (:import
    (com.fasterxml.jackson.databind ObjectMapper
                                    JsonNode)
-   (com.fasterxml.jackson.databind.node JsonNodeType
-                                        ObjectNode
+   (com.fasterxml.jackson.databind.node ObjectNode
                                         ArrayNode
                                         NullNode
                                         MissingNode
@@ -118,15 +117,9 @@
   [^JsonNode json-node]
   (.writeValueAsString ^ObjectMapper jsonista/default-object-mapper json-node))
 
-;; (json-node->str (str->json-node "{\"a\": \"1\", \"b\":[1,2], \"c\": 3}"))
-;; (json-node->str (str->json-node "{\"a\": \"1\", \"b\":[1,2], \"c\": 3}"))
-;; (json-node->clj (clj->json-node nil))
-
 (defn clj->json-node
   [x]
   (.valueToTree ^ObjectMapper jsonista/default-object-mapper x))
-
-;; (clj->json-node {:a 1 :b 2})
 
 (defn json-content-type?
   [content-type]

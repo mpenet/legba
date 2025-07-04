@@ -13,9 +13,7 @@
         metosin/jsonista {:mvn/version "0.3.13"}
         exoscale/ex {:mvn/version "0.4.1"}
         io.swagger.parser.v3/swagger-parser {:mvn/version "2.1.22"}
-        ;; playing with that lib
-        com.networknt/json-schema-validator {:mvn/version "1.5.7"}
-        com.cnuernber/charred {:mvn/version "1.034"}}
+        com.networknt/json-schema-validator {:mvn/version "1.5.7"}}
  :aliases
  {:test
   {:extra-deps {legba/test-runner {:local/root "dev"}
@@ -31,6 +29,6 @@
           {:deps/root "jvm"
            :git/sha "7c8bef54eda28367193ec433af01bb940114f012"}}
    :exec-fn quickdoc.api/quickdoc
-   :exec-args {:github/repo "https://github.com/mpenet/pact"
-               :git/branch "master"
-               :source-paths ["src/s_exp/pact.clj"]}}}}
+   :exec-args {:github/repo "https://github.com/mpenet/legba"
+               :git/branch "main"
+               :source-paths ["src/s_exp/legba.clj"]}}}}
