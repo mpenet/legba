@@ -26,7 +26,6 @@
     (.setPreloadJsonSchema true)
     (.setCacheRefs true)
     (.setFormatAssertionsEnabled true)
-    (.setTypeLoose true)
     (.setPreloadJsonSchemaRefMaxNestingDepth 40)
     (.setPathType PathType/JSON_PATH)))
 
@@ -68,10 +67,10 @@
     (when-not (empty? vms)
       (into []
             (map (fn [^ValidationMessage m]
-                   (let [] {:type (.getType m)
-                            :path (.toString (.getInstanceLocation m))
-                            :error (.getError m)
-                            :message (.getMessage m)})))
+                   {:type (.getType m)
+                    :path (.toString (.getInstanceLocation m))
+                    :error (.getError m)
+                    :message (.getMessage m)}))
             vms))))
 
 (defn validate!

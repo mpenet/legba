@@ -80,68 +80,6 @@
                         }
                     }
                 }
-            },
-            "post": {
-                "summary": "Create a new item",
-                "description": "Adds a new item to the system.",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "description": "Name of the new item."
-                                    },
-                                    "value": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "description": "Numerical value for the new item."
-                                    }
-                                },
-                                "required": ["name", "value"]
-                            },
-                            "examples": {
-                                "newItem": {
-                                    "summary": "Example of a new item to create",
-                                    "value": {
-                                        "name": "New Item C",
-                                        "value": 15.75
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Item created successfully.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string",
-                                            "format": "uuid"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "number"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid input."
-                    }
-                }
             }
         },
         "/items": {

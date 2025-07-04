@@ -1,9 +1,10 @@
 (ns s-exp.legba.router
-  (:require [reitit.core :as r]))
+  (:require [exoscale.ex :as ex]
+            [reitit.core :as r]))
 
 (defn router
   "Creates a reitit path router by method"
-  [{:as schema :keys [openapi-schema]} & {:as _opts :keys [extra-routes]}]
+  [{:as _schema :keys [openapi-schema]} handlers & {:as _opts :keys [extra-routes]}]
   (-> (reduce (fn [routers-m [method & route]]
                 (update routers-m
                         method
@@ -13,14 +14,18 @@
               (for [[path methods] (get openapi-schema "paths")
                     [method parameters] methods
                     :let [method (keyword method)]]
-                [(keyword method)
-                 path
-                 {:path path
-                  :method method
-                  :sub-schema
-                  ;; to stop reitit from messing with my metadata...
-                  ;; TODO just replace reitit with something less crazy (bidy, simple-router?)
-                  ((promise) parameters)}]))
+                (do
+                  (when-not (get handlers [method path])
+                    (ex/ex-incorrect! (format "Missing route definition in handlers for %s %s"
+                                              (name method) path)))
+                  [(keyword method)
+                   path
+                   {:path path
+                    :method method
+                    :sub-schema
+                   ;; to stop reitit from messing with my metadata...
+                   ;; TODO just replace reitit with something less crazy (bidy, simple-router?)
+                    ((promise) parameters)}])))
       (update-vals (fn [routes]
                      (r/router (merge routes extra-routes)
                                {:syntax :bracket})))))

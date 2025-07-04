@@ -5,13 +5,9 @@
             [s-exp.legba.router :as router]
             [s-exp.legba.schema :as schema]))
 
-(defn handler-for-request
+(defn- handler-for-request
   [handlers {:keys [method path] :as _match} _opts]
-  (let [req-key [method path]]
-    (or (get handlers req-key)
-        (throw (ex-info (format "Handler not defined for request %s"
-                                req-key)
-                        {:type ::handler-undefined})))))
+  (get handlers [method path]))
 
 (def default-options
   {:not-found-response {:status 404 :body "Not found"}
@@ -45,7 +41,7 @@
   (let [{:as opts :keys [schema not-found-response]}
         (merge default-options opts)
         schema (schema/load-schema schema)
-        router (router/router schema opts)]
+        router (router/router schema handlers opts)]
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as match :keys [sub-schema path-params]}
                (router/match-route router request-method uri)]

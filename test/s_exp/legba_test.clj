@@ -1,5 +1,5 @@
 (ns s-exp.legba-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest is]]
             [s-exp.legba :as l]))
 
 (def item-id (str (random-uuid)))
@@ -38,8 +38,6 @@
                       (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)}
                      :schema "schema/oas/3.1/petstore.json"))
-
-;; ((make-handler {}) {:request-method :get :uri "/item/ab"})
 
 (deftest requests-test
   (let [h (make-handler {})]
