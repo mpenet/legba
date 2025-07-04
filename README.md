@@ -42,7 +42,6 @@ com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
 ## Usage 
 
 ``` clj
-
 (require '[s-exp.legba :as l])
 
 (l/openapi-handler {[:get "/item/{itemId}"]
