@@ -73,7 +73,7 @@
               (throw (ex-info "Invalid Request Body"
                               {:type ::invalid-body
                                :schema body-schema
-                               :errors (into [] (map str) errors)})))
+                               :errors errors})))
             (cond-> request
               json-body
               (assoc :body (json/json-node->clj body opts))))

@@ -31,15 +31,15 @@
           (throw (ex-info "Invalid Response Body"
                           {:type ::invalid-body
                            :schema body-schema
-                           :errors (into [] (map str) errors)})))
+                           :errors errors})))
         ;; we converted the body, turn it into a string for the response
         (cond-> response
           json-body
           (assoc :body (json/json-node->str body))))
-      (throw (ex-info "Invalid response format for content-type"
-                      {:type ::invalid-format
+      (throw (ex-info "Invalid response content-type"
+                      {:type ::invalid-content-type
                        :schema ct-schema
-                       :message "Invalid Response content-type"})))))
+                       :message "Invalid Response Content-Type"})))))
 
 (defn conform-response-headers
   [{:as response :keys [status] :or {status 200}}
@@ -67,3 +67,5 @@
 
 (ex/derive ::invalid-header :s-exp.legba/invalid)
 (ex/derive ::invalid-body :s-exp.legba/invalid)
+(ex/derive ::invalid-format-for-status :s-exp.legba/invalid)
+(ex/derive ::invalid-content-type :s-exp.legba/invalid)
