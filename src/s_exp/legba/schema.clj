@@ -1,6 +1,6 @@
 (ns s-exp.legba.schema
-  (:require [charred.api :as charred]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
+            [jsonista.core :as jsonista]
             [s-exp.legba.json-pointer :as json-pointer])
   (:import (com.fasterxml.jackson.databind JsonNode)
            (com.networknt.schema JsonSchemaFactory
@@ -40,7 +40,7 @@
                                            nil
                                            parse-options)
                             (Json/pretty)
-                            (charred/read-json)
+                            (jsonista/read-value)
                             (get "openAPI"))
         openapi-schema (json-pointer/annotate-tree json-schema-raw)]
     {:openapi-schema openapi-schema
