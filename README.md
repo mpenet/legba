@@ -36,7 +36,7 @@ What it doesn't aim to do (at this time):
 For now it's tools.deps only until an alpha is out.
 
 ```clj 
-com.s-exp/legba {:git/sha "..."}
+com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
 ```
 
 ## Usage 
