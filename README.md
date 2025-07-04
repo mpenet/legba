@@ -89,9 +89,9 @@ heavily on Jackson, so we re-use facilites provided by it.
 Currently routing is performed via reitit, but we don't want to tie ourselves to
 it longer term, so that might change eventually.
 
-### Api 
+### Documentation
 
-[api docs](api.md)
+[API docs](API.md)
 
 ## License
 
