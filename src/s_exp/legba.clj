@@ -6,6 +6,7 @@
             [s-exp.legba.schema :as schema]))
 
 (def default-options
+  "Default options used by openapi-handler"
   {:not-found-response {:status 404 :body "Not found"}
    :key-fn keyword
    :query-string-params-key :params})
@@ -28,6 +29,9 @@
         not-found-response))))
 
 (defn openapi-handler
+  "Same as `openapi-handler*` but wraps with
+  `s-exp.legba.middleware/wrap-error-response` middleware turning exceptions
+  into nicely formatted error responses"
   [handlers & {:as opts}]
   (-> (openapi-handler* handlers opts)
       m/wrap-error-response))

@@ -23,13 +23,6 @@ all aspects of the spec such as body contents, path parameters, query-string
 parameters, headers, status codes, etc... Upon errors it will return an error
 message with details about the failure and part of the schema concerned.
 
-What it doesn't aim to do (at this time):
-
-* Coercing payloads (ex: uuids, they get validated but you get a string)
-
-* Supporting other means of validation, it's intentionally limited by what
-  json-schema allows you to express and is agnostic of any clojure specific
-  validation framework.
   
 ## Installation 
 

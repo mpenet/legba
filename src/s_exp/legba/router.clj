@@ -3,7 +3,7 @@
             [reitit.core :as r]))
 
 (defn router
-  "Creates a reitit path router by method"
+  "Creates a reitit router by method/path"
   [{:as _schema :keys [openapi-schema]} openapi-handlers & {:as _opts :keys [extra-routes]}]
   (-> (reduce (fn [routers-m [method & route]]
                 (update routers-m
@@ -32,6 +32,7 @@
                                {:syntax :bracket})))))
 
 (defn match-route
+  "Matches `method` `path` on `router`"
   [router method path]
   (when-let [r (get router method)]
     (when-let [{:as _match :keys [data path-params]} (r/match-by-path r path)]
