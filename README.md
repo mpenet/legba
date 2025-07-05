@@ -2,27 +2,48 @@
 
 <img src="https://github.com/user-attachments/assets/7b36b294-8ada-4ef6-bbcc-4e9be4b101f7" width="100" height="100" style="float:left;">
 
-/!\ WIP: Here be dragons, it's not finished (but it's close).
-
 *Legba* is a library aimed at building **fully OpenApi 3.1 compliant** services
 in Clojure.
 
-It leverages
-[networknt/json-schema-validator](https://github.com/networknt/json-schema-validator)
-for the schema validation part, ensuring **[complete and up-to-date spec
-compliance](https://www.creekservice.org/json-schema-validation-comparison/functional)**,
-not to mention **[great
-performance](https://www.creekservice.org/json-schema-validation-comparison/performance)**.
+## It's goals:
 
-*Legba* works by allowing you to construct a RING handler from an openapi json
-file, that handler will be aware of the routing necesary and perform all the
-checks that you specified via the openapi file provided .
+* Provide **rock solid**, **full coverage** of OpenAPI 3.1 spec
 
-Requests **and** Responses will be validated fully against the schema, covering
-all aspects of the spec such as body contents, path parameters, query-string
-parameters, headers, status codes, etc... Upon errors it will return an error
-message with details about the failure and part of the schema concerned.
+* Support all the bells & whistles like `$refs`, conditionals, etc
 
+* Be server adapter agnostic, it should be **usable with any RING compliant
+  server adapter**
+  
+* Provide building blocks to **build your own routing schemes** or **plug onto
+  any existing router**
+  
+* But **also provide a default, easy to use single handler entry point** with
+  routing for a given schema, built on the aformentioned primitives
+
+* **[Great
+  performance](https://www.creekservice.org/json-schema-validation-comparison/performance)****,
+  being built on
+  [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator),
+  which consistently ranks on the top of the java based json-schema validator.
+
+* Provide detailed, informative and customizable **error messages**
+
+## How does it work
+
+Legba provides simple paths to run an OpenAPI based server. 
+
+You can either:
+
+* Rely on `s-exp.legba/openapi-handler`: from an OpenAPI file and a map of
+  `[method path]` -> `handler` matching the routes of the schema returns a
+  single handler that will manage routing and perform validation and marshalling
+  of the data according to the schema. Routing is performed via reitit in this
+  case. This handler can simply be plugged to a RING server adapter and you're
+  good to go.
+  
+* Or use `s-exp.legba.handler/openapi-routes`: from a map of `[method path]` ->
+  `handler` will return a new map of `[method path]` -> `openapi-handler`. From
+  this map you can then plug the openapi handlers in any routing solution.
   
 ## Installation 
 
@@ -50,7 +71,9 @@ com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
                     (fn [_request]
                       {..})}
                    ;; path to a resource file
-                   :schema "schema/oas/3.1/catalog.json")
+                   :schema "schema/oas/3.1/catalog.json"
+                   ;; {...} ; options
+                   )
 ```
 
 There's also an extra argument with options:
@@ -73,14 +96,10 @@ There's also an extra argument with options:
   
 ### Notes
 
-You don't have to do any JSON marshaling, if the content-type is
-application/json we will read data as such, same goes for writing. Given the
-validation library needs the data to be parsed, we preserve this work and re-use
-the parsed content as much as possible. networknt/json-schema-validator relies
-heavily on Jackson, so we re-use facilites provided by it.
-
-Currently routing is performed via reitit, but we don't want to tie ourselves to
-it longer term, so that might change eventually.
+You don't have to do any JSON marshaling, if the content-type is of
+application/json type we will read data as such, same goes for writing. Given
+the validation library needs the data to be parsed, we preserve this work and
+re-use the parsed content.
 
 ### Documentation
 

@@ -23,17 +23,3 @@
         (vary-meta assoc
                    :schema schema
                    :sub-schema sub-schema))))
-
-(defn openapi-routes
-  "From a map of [method path] -> ring handler returns a map of [method path] ->
-  openapi-wrapped-handler"
-  [routes schema opts]
-  (reduce (-> (fn [m [[_method _path :as coords] handler]]
-                (assoc m
-                       coords
-                       (make-handler handler
-                                     schema
-                                     coords
-                                     opts))))
-          {}
-          routes))
