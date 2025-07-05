@@ -1,70 +1,36 @@
 (ns s-exp.legba
   (:require [exoscale.ex :as ex]
-            [s-exp.legba.request :as request]
-            [s-exp.legba.response :as response]
+            [s-exp.legba.handler :as handler]
+            [s-exp.legba.middleware :as m]
             [s-exp.legba.router :as router]
             [s-exp.legba.schema :as schema]))
-
-(defn- handler-for-request
-  [handlers {:keys [method path] :as _match} _opts]
-  (get handlers [method path]))
 
 (def default-options
   {:not-found-response {:status 404 :body "Not found"}
    :key-fn keyword
    :query-string-params-key :params})
 
-(defmulti ex->response
-  #(some-> % ex/ex-type)
-  :hierarchy ex/hierarchy)
-
-(defmethod ex->response
-  :s-exp.legba/invalid
-  [e]
-  (let [data (ex-data e)]
-    {:status 400
-     :content-type "application/json"
-     :body (assoc data :message (ex-message e))}))
-
-(defn wrap-error-response
-  [handler]
-  (fn [req]
-    (ex/try+
-      (handler req)
-      #_{:clj-kondo/ignore [:unresolved-symbol]}
-      (catch :exoscale.ex/invalid _
-        #_{:clj-kondo/ignore [:unresolved-symbol]}
-        (ex->response &ex)))))
-
 (defn openapi-handler*
-  [handlers & {:as opts}]
+  "Takes a map of routes as [method path] -> ring-handler, turns them into a map
+  of routes to openapi handlers then creates a handler that will dispatch on the
+  appropriate openapi handler from a potential router match. If not match is
+  found, returns `not-found-response` (opts)"
+  [routes & {:as opts}]
   (let [{:as opts :keys [schema not-found-response]}
         (merge default-options opts)
         schema (schema/load-schema schema)
-        router (router/router schema handlers opts)]
+        openapi-routes (handler/openapi-routes routes schema opts)
+        router (router/router schema openapi-routes opts)]
     (fn [{:as request :keys [request-method uri]}]
-      (if-let [{:as match :keys [sub-schema path-params]}
+      (if-let [{:as _match :keys [handler path-params]}
                (router/match-route router request-method uri)]
-        (let [request (request/conform-request
-                       (cond-> request
-                         path-params
-                         (assoc :path-params path-params))
-                       schema
-                       sub-schema
-                       opts)
-              handler (handler-for-request handlers match opts)
-              response (handler request)
-              response (response/conform-response response
-                                                  schema
-                                                  sub-schema
-                                                  opts)]
-          (vary-meta response dissoc :match :schema))
+        (handler (assoc request :path-params path-params))
         not-found-response))))
 
 (defn openapi-handler
   [handlers & {:as opts}]
   (-> (openapi-handler* handlers opts)
-      wrap-error-response))
+      m/wrap-error-response))
 
 (ex/derive ::invalid :exoscale.ex/invalid)
 (ex/derive ::handler-undefined :exoscale.ex/fault)

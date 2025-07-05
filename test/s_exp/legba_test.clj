@@ -44,7 +44,6 @@
 (deftest requests-test
   (let [h (make-handler {})]
     (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
-
     (is (= {:status 400,
             :content-type "application/json",
             :body
