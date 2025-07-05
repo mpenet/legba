@@ -31,4 +31,7 @@
    :exec-fn quickdoc.api/quickdoc
    :exec-args {:github/repo "https://github.com/mpenet/legba"
                :git/branch "main"
-               :source-paths ["src/s_exp/legba.clj"]}}}}
+               :toc true
+               :var-links true
+               ;; :source-paths ["src/s_exp/legba.clj"]
+               }}}}
