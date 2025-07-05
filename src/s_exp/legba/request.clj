@@ -15,6 +15,7 @@
 
 (def query-params-schema (match->params-schema-fn "query"))
 (def path-params-schema (match->params-schema-fn "path"))
+(def cookie-params-schema (match->params-schema-fn "cookie"))
 
 (defn request->conform-query-params
   [request schema sub-schema {:as opts :keys [query-string-params-key]}]
@@ -35,6 +36,26 @@
         (throw (ex-info "Invalid Query Parameters"
                         {:type ::invalid-query-parameters
                          :schema m-query-params
+                         :errors errors})))))
+  request)
+
+(defn request->conform-cookie-params
+  [request schema sub-schema opts]
+  (when-let [m-cookie-params (cookie-params-schema sub-schema)]
+    (doseq [[schema-key {:as cookie-schema :strs [required]}] m-cookie-params
+            :let [param-val (get-in request [:cookies schema-key]
+                                    ::missing)
+                  _ (when (and required (= ::missing param-val))
+                      (throw (ex-info "Missing Required Cookie Parameter"
+                                      {:type ::missing-cookie-parameter
+                                       :schema cookie-schema})))]]
+      (when-let [errors (schema/validate! schema
+                                          (get cookie-schema "schema")
+                                          (pr-str (or param-val ""))
+                                          opts)]
+        (throw (ex-info "Invalid Cookie Parameters"
+                        {:type ::invalid-cookie-parameters
+                         :schema m-cookie-params
                          :errors errors})))))
   request)
 
@@ -89,11 +110,14 @@
   (-> request
       (request->conform-path-params schema sub-schema opts)
       (request->conform-query-params schema sub-schema opts)
+      (request->conform-cookie-params schema sub-schema opts)
       (request->conform-body schema sub-schema opts)))
 
 (ex/derive ::invalid :s-exp.legba/invalid)
 (ex/derive ::invalid-body :s-exp.legba/invalid)
 (ex/derive ::invalid-path-parameters :s-exp.legba/invalid)
 (ex/derive ::invalid-query-parameters :s-exp.legba/invalid)
+(ex/derive ::invalid-cookie-parameters :s-exp.legba/invalid)
 (ex/derive ::invalid-content-type :s-exp.legba/invalid)
 (ex/derive ::missing-query-parameter :s-exp.legba/invalid)
+(ex/derive ::missing-cookie-parameter :s-exp.legba/invalid)
