@@ -26,7 +26,7 @@
 
 (defn openapi-routes
   "From a map of [method path] -> ring handler returns a map of [method path] ->
-  openapi-wraped-handler"
+  openapi-wrapped-handler"
   [routes schema opts]
   (reduce (-> (fn [m [[_method _path :as coords] handler]]
                 (assoc m
