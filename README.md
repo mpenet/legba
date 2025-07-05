@@ -12,7 +12,7 @@ in Clojure.
 * Support all the bells & whistles like `$refs`, conditionals, etc
 
 * **[Great
-  performance](https://www.creekservice.org/json-schema-validation-comparison/performance)***,
+  performance](https://www.creekservice.org/json-schema-validation-comparison/performance)**,
   being built on
   [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator),
   which consistently ranks on the top of the java based json-schema validator.
