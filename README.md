@@ -11,6 +11,12 @@ in Clojure.
 
 * Support all the bells & whistles like `$refs`, conditionals, etc
 
+* **[Great
+  performance](https://www.creekservice.org/json-schema-validation-comparison/performance)***,
+  being built on
+  [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator),
+  which consistently ranks on the top of the java based json-schema validator.
+
 * Be server adapter agnostic, it should be **usable with any RING compliant
   server adapter**
   
@@ -19,12 +25,6 @@ in Clojure.
   
 * But **also provide a default, easy to use single handler entry point** with
   routing for a given schema, built on the aformentioned primitives
-
-* **[Great
-  performance](https://www.creekservice.org/json-schema-validation-comparison/performance)****,
-  being built on
-  [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator),
-  which consistently ranks on the top of the java based json-schema validator.
 
 * Provide detailed, informative and customizable **error messages**
 
