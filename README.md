@@ -1,5 +1,4 @@
 # Legba 
-
 <img src="https://github.com/user-attachments/assets/7b36b294-8ada-4ef6-bbcc-4e9be4b101f7" width="100" height="100" style="float:left;">
 
 *Legba* is a library designed for building **fully OpenAPI 3.1 compliant**
@@ -60,7 +59,9 @@ You can either:
   
 ## Installation
 
-For now it's tools.deps only until an alpha is out.
+[![Clojars Project](https://img.shields.io/clojars/v/com.s-exp/legba.svg)](https://clojars.org/com.s-exp/legba)
+
+Or via git deps:
 
 ```clj 
 com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
