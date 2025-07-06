@@ -17,7 +17,7 @@
 (def path-params-schema (match->params-schema-fn "path"))
 (def cookie-params-schema (match->params-schema-fn "cookie"))
 
-(defn request->conform-query-params
+(defn validate-query-params
   [request schema sub-schema {:as opts :keys [query-string-params-key]}]
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[schema-key {:as query-schema :strs [required]}] m-query-params
@@ -39,7 +39,7 @@
                          :errors errors})))))
   request)
 
-(defn request->conform-cookie-params
+(defn validate-cookie-params
   [request schema sub-schema opts]
   (when-let [m-cookie-params (cookie-params-schema sub-schema)]
     (doseq [[schema-key {:as cookie-schema :strs [required]}] m-cookie-params
@@ -59,7 +59,7 @@
                          :errors errors})))))
   request)
 
-(defn request->conform-path-params
+(defn validate-path-params
   [request schema sub-schema opts]
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[schema-key param-schema] m-path-params
@@ -74,7 +74,7 @@
                          :errors errors})))))
   request)
 
-(defn request->conform-body
+(defn validate-body
   [{:as request :keys [body headers]} schema sub-schema opts]
   (let [req-body-schema (get sub-schema "requestBody")]
     (if (get req-body-schema "required")
@@ -104,14 +104,14 @@
                            :message "Invalid content type for request"}))))
       request)))
 
-(defn conform-request
+(defn validate
   [request schema sub-schema opts]
   ;; validate params
   (-> request
-      (request->conform-path-params schema sub-schema opts)
-      (request->conform-query-params schema sub-schema opts)
-      (request->conform-cookie-params schema sub-schema opts)
-      (request->conform-body schema sub-schema opts)))
+      (validate-path-params schema sub-schema opts)
+      (validate-query-params schema sub-schema opts)
+      (validate-cookie-params schema sub-schema opts)
+      (validate-body schema sub-schema opts)))
 
 (ex/derive ::invalid :s-exp.legba/invalid)
 (ex/derive ::invalid-body :s-exp.legba/invalid)

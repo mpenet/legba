@@ -5,7 +5,7 @@
             [s-exp.legba.json :as json]
             [s-exp.legba.schema :as schema]))
 
-(defn conform-response-body
+(defn validate-response-body
   [{:as response
     :keys [status body headers]
     :or {status 200}}
@@ -41,7 +41,7 @@
                        :schema ct-schema
                        :message "Invalid Response Content-Type"})))))
 
-(defn conform-response-headers
+(defn validate-response-headers
   [{:as response :keys [status] :or {status 200}}
    schema sub-schema opts]
   (when-let [headers-schema (or (some-> sub-schema (get-in ["responses" (str status) "headers"]))
@@ -59,11 +59,11 @@
                          :errors errors})))))
   response)
 
-(defn conform-response
+(defn validate
   [response schema sub-schema opts]
   (-> response
-      (conform-response-headers schema sub-schema opts)
-      (conform-response-body schema sub-schema opts)))
+      (validate-response-headers schema sub-schema opts)
+      (validate-response-body schema sub-schema opts)))
 
 (ex/derive ::invalid-header :s-exp.legba/invalid)
 (ex/derive ::invalid-body :s-exp.legba/invalid)

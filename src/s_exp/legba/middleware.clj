@@ -9,7 +9,7 @@
   [handler schema method path opts]
   (let [sub-schema (get-in schema [:openapi-schema "paths" path (name method)])]
     (-> (fn [{:as request :keys [path-params]}]
-          (let [request (request/conform-request
+          (let [request (request/validate
                          (cond-> request
                            path-params
                            (assoc :path-params path-params))
@@ -17,10 +17,10 @@
                          sub-schema
                          opts)
                 response (handler request)]
-            (response/conform-response response
-                                       schema
-                                       sub-schema
-                                       opts)))
+            (response/validate response
+                               schema
+                               sub-schema
+                               opts)))
         (vary-meta assoc
                    :schema schema
                    :sub-schema sub-schema))))
