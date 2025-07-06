@@ -26,7 +26,19 @@
                                 (str/join ", " missing-handlers))))))
 (defn handlers
   "From a map of [method path] -> ring handler returns a map of [method path] ->
-  openapi-wrapped-handler"
+  openapi-wrapped-handler.
+
+  Options:
+
+  * `:key-fn` - Control map keys decoding when turning jackson JsonNodes to clj
+    data for the handler - default to `keyword`
+
+  * `:query-string-params-key` - where to find the decoded query-string
+     parameters - defaults to `:params`
+
+  * `:validation-result` - function that controls how to turn
+    `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+    to `s-exp.legba.schema/validation-result`"
   [routes schema & {:as opts}]
   (let [opts (merge default-options opts)]
     (reduce (-> (fn [m [[method path :as coords] handler]]
@@ -44,7 +56,25 @@
   "Takes a map of routes as [method path] -> ring-handler, turns them into a map
   of routes to openapi handlers then creates a handler that will dispatch on the
   appropriate openapi handler from a potential router match. If not match is
-  found, returns `not-found-response` (opts)"
+  found, returns `not-found-response`.
+
+  Options:
+
+  * `:not-found-response` - defaults to `{:status 404 :body " Not found "}`
+
+  * `:key-fn` - Control map keys decoding when turning jackson JsonNodes to clj
+    data for the handler - default to `keyword`
+
+  * `:query-string-params-key` - where to find the decoded query-string
+     parameters - defaults to `:params`
+
+  * `:validation-result` - function that controls how to turn
+    `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+    to `s-exp.legba.schema/validation-result`
+
+  * `:extra-routes` - extra routes to be passed to the underlying reitit router
+    (using `{:syntax :bracket}`)
+  "
   [routes schema & {:as opts}]
   (let [{:as opts :keys [not-found-response]}
         (merge default-options opts)

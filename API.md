@@ -72,8 +72,20 @@ Default options used by openapi-handler
 ```
 
 From a map of [method path] -> ring handler returns a map of [method path] ->
-  openapi-wrapped-handler
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L27-L41">Source</a></sub></p>
+  openapi-wrapped-handler.
+
+  Options:
+
+  * `:key-fn` - Control map keys decoding when turning jackson JsonNodes to clj
+    data for the handler - default to `keyword`
+
+  * `:query-string-params-key` - where to find the decoded query-string
+     parameters - defaults to `:params`
+
+  * `:validation-result` - function that controls how to turn
+    `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+    to [`s-exp.legba.schema/validation-result`](#s-exp.legba.schema/validation-result)
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L27-L53">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler">`routing-handler`</a><a name="s-exp.legba/routing-handler"></a>
 ``` clojure
@@ -84,7 +96,7 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 Same as `openapi-handler*` but wraps with
   [`s-exp.legba.middleware/wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) middleware turning exceptions
   into nicely formatted error responses
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L61-L67">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L91-L97">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler*">`routing-handler*`</a><a name="s-exp.legba/routing-handler*"></a>
 ``` clojure
@@ -95,8 +107,12 @@ Same as `openapi-handler*` but wraps with
 Takes a map of routes as [method path] -> ring-handler, turns them into a map
   of routes to openapi handlers then creates a handler that will dispatch on the
   appropriate openapi handler from a potential router match. If not match is
-  found, returns `not-found-response` (opts)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L43-L59">Source</a></sub></p>
+  found, returns `not-found-response`.
+
+  Options:
+
+  * `:not-found-response` - defaults to `{:status 404 :body 
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L55-L89">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.content-type">s-exp.legba.content-type</a>
