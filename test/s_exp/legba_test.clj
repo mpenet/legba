@@ -39,7 +39,7 @@
                       [:get "/search"]
                       (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)}
-                     "classpath://schema/oas/3.1/petstore.json"))
+                     "classpath://schema/oas/3.1/store.json"))
 
 (deftest requests-test
   (let [h (make-handler {})]
