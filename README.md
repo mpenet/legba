@@ -5,7 +5,7 @@
 *Legba* is a library aimed at building **fully OpenApi 3.1 compliant** services
 in Clojure.
 
-## Its goals:
+## Its goals
 
 * Provide **rock solid**, **full coverage** of OpenAPI 3.1 spec
 
