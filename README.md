@@ -28,7 +28,7 @@ Legba ensures that the final OpenAPI file exposed to your users remains
   performance](https://www.creekservice.org/json-schema-validation-comparison/performance)**,
   being built on
   [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator),
-  which consistently ranks on the top of the java based json-schema validator.
+  which consistently ranks on the top of the java based json-schema validators.
 
 * Be server adapter agnostic, it should be **usable with any RING compliant
   server adapter** (jetty, http-kit, aleph, hirundo, etc...)
@@ -36,8 +36,8 @@ Legba ensures that the final OpenAPI file exposed to your users remains
 * Provide building blocks to **build on top of your preferred routing libraries**
   or **plug onto any existing router**
   
-* But **also provide a default, easy to use single handler entry point** with
-  routing for a given schema, built on the aforementioned primitives
+* But **can also provide a default, easy to use single handler entry point**
+  with routing for a given schema, built on the aforementioned primitives
 
 * Provide **detailed**, informative and **customizable error messages**
 
