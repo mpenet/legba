@@ -37,6 +37,7 @@
         (merge default-options opts)
         schema (schema/load-schema schema)
         openapi-routes (openapi-map routes schema opts)
+        _ (handler/ensure-handler-coverage! openapi-routes schema)
         router (router/router schema openapi-routes opts)]
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as _match :keys [handler path-params]}

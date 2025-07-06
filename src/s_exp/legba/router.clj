@@ -15,17 +15,12 @@
                     [method _parameters] methods
                     :let [method (keyword method)
                           openapi-handler (get openapi-handlers [method path])]]
-
-                (do
-                  (when-not openapi-handler
-                    (ex/ex-incorrect! (format "Missing route definition in handlers for %s %s"
-                                              (name method) path)))
-                  [(keyword method)
-                   path
-                   {:path path
-                    :method method
-                    :handler
-                    ((promise) openapi-handler)}])))
+                [(keyword method)
+                 path
+                 {:path path
+                  :method method
+                  :handler
+                  ((promise) openapi-handler)}]))
 
       (update-vals (fn [routes]
                      (r/router (merge routes extra-routes)
