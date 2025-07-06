@@ -17,7 +17,6 @@
   {:extra-deps {legba/test-runner {:local/root "dev"}
                 org.clojure/test.check {:mvn/version "1.1.1"}}
    :jvm-opts ["-Dclojure.main.report=stderr"]
-
    :exec-fn test-runner/run
    :extra-paths ["test" "dev" "test/resources"]}
 
