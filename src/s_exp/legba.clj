@@ -89,7 +89,7 @@
         not-found-response))))
 
 (defn routing-handler
-  "Same as `openapi-handler*` but wraps with
+  "Same as `routing-handler*` but wraps with
   `s-exp.legba.middleware/wrap-error-response` middleware turning exceptions
   into nicely formatted error responses"
   [routes schema & {:as opts}]
