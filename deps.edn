@@ -12,7 +12,6 @@
         metosin/reitit-core {:mvn/version "0.9.1"}
         metosin/jsonista {:mvn/version "0.3.13"}
         exoscale/ex {:mvn/version "0.4.1"}
-        io.swagger.parser.v3/swagger-parser {:mvn/version "2.1.22"}
         com.networknt/json-schema-validator {:mvn/version "1.5.7"}}
  :aliases
  {:test

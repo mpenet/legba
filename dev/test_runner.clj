@@ -58,12 +58,14 @@
         (ef/run-tests options)
         ret->exit-code)))
 
+#_{:clojure-lsp/ignore [:clojure-lsp/unused-public-var]}
 (defn run-unit
   [options]
   (run (assoc options
               :selector
               (complement :integration))))
 
+#_{:clojure-lsp/ignore [:clojure-lsp/unused-public-var]}
 (defn run-integation
   [options]
   (run (assoc options :selector :integration)))
