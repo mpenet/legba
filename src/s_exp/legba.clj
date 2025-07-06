@@ -16,12 +16,13 @@
   openapi-wrapped-handler"
   [routes schema opts]
   (let [opts (merge default-options opts)]
-    (reduce (-> (fn [m [[_method _path :as coords] handler]]
+    (reduce (-> (fn [m [[method path :as coords] handler]]
                   (assoc m
                          coords
                          (handler/make-handler handler
                                                schema
-                                               coords
+                                               method
+                                               path
                                                opts))))
             {}
             routes)))

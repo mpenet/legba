@@ -4,8 +4,8 @@
 
 (defn make-handler
   "Takes a regular RING handler returns a handler that will apply openapi
-  validation from the supplied `schema` for a set of `coords` (method path)"
-  [handler schema [method path] opts]
+  validation from the supplied `schema` for a given `method` and `path`"
+  [handler schema method path opts]
   (let [sub-schema (get-in schema [:openapi-schema "paths" path (name method)])]
     (-> (fn [{:as request :keys [path-params]}]
           (let [request (request/conform-request

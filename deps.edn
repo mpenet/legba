@@ -8,7 +8,6 @@
     [:distribution "repo"]]]]
 
  :deps {org.clojure/clojure {:mvn/version "1.12.0"}
-        metosin/reitit-ring {:mvn/version "0.9.1"}
         metosin/reitit-core {:mvn/version "0.9.1"}
         metosin/jsonista {:mvn/version "0.3.13"}
         exoscale/ex {:mvn/version "0.4.1"}
@@ -22,6 +21,11 @@
    :exec-fn test-runner/run
    :extra-paths ["test" "dev" "test/resources"]}
 
+  :build
+  {:deps {io.github.clojure/tools.build {:git/tag "v0.10.9" :git/sha "e405aac"}
+          io.github.slipset/deps-deploy {:git/sha "07022b92d768590ab25b9ceb619ef17d2922da9a"}}
+   :ns-default build}
+
   :quickdoc
   {:deps {org.babashka/cli {:mvn/version "0.4.36"}
           io.github.borkdude/quickdoc
@@ -30,7 +34,4 @@
    :exec-fn quickdoc.api/quickdoc
    :exec-args {:github/repo "https://github.com/mpenet/legba"
                :git/branch "main"
-               :toc true
-               :var-links true
-               ;; :source-paths ["src/s_exp/legba.clj"]
-               }}}}
+               :var-links true}}}}
