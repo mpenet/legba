@@ -2,10 +2,22 @@
 
 <img src="https://github.com/user-attachments/assets/7b36b294-8ada-4ef6-bbcc-4e9be4b101f7" width="100" height="100" style="float:left;">
 
-*Legba* is a library aimed at building **fully OpenApi 3.1 compliant** services
+*Legba* is a library aimed at building **fully OpenAPI 3.1 compliant** services
 in Clojure.
 
-## Its goals
+Legba provides simple paths to run OpenAPI based servers. It starts from the
+idea that the OpenAPI schema file should be the corner-stone of your service
+definition. Instead of generating it from routes in another DSL like some other
+libraries do, legba uses that schema to generate appropriate routes and wrap
+handlers you supply with OpenAPI validation.
+
+That doesn't prevent you to generate parts of your schemas with libraries such
+as [pact](https://github.com/mpenet/pact), but we want to ensure that the
+OpenAPI file that ends up being exposed to your users is not limited in any way
+and is reviewable/editable. 
+
+
+## Legba goals
 
 * Provide **rock solid**, **full coverage** of OpenAPI 3.1 spec
 
@@ -18,34 +30,34 @@ in Clojure.
   which consistently ranks on the top of the java based json-schema validator.
 
 * Be server adapter agnostic, it should be **usable with any RING compliant
-  server adapter**
+  server adapter** (jetty, http-kit, aleph, hirundo, etc...)
   
-* Provide building blocks to **build your own routing schemes** or **plug onto
-  any existing router**
+* Provide building blocks to **build on top of your preferred routing libraries**
+  or **plug onto any existing router**
   
 * But **also provide a default, easy to use single handler entry point** with
-  routing for a given schema, built on the aformentioned primitives
+  routing for a given schema, built on the aforementioned primitives
 
-* Provide detailed, informative and customizable **error messages**
+* Provide **detailed**, informative and **customizable error messages**
 
 ## How does it work
-
-Legba provides simple paths to run an OpenAPI based server. 
 
 You can either:
 
 * Rely on `s-exp.legba/openapi-handler`: from an OpenAPI file and a map of
-  `[method path]` -> `handler` matching the routes of the schema returns a
-  single handler that will manage routing and perform validation and marshalling
-  of the data according to the schema. Routing is performed via reitit in this
-  case. This handler can simply be plugged to a RING server adapter and you're
-  good to go.
+  `[method path]` -> `handler` that matches the routes of the schema, returns a
+  single handler that will manage routing (via reitit) and perform validation
+  and marshaling of the data according to the schema (via
+  networknt/json-schema-validator). This handler can simply be plugged to a RING
+  server adapter and you're good to go.
   
-* Or use `s-exp.legba.handler/openapi-routes`: from a map of `[method path]` ->
-  `handler` will return a new map of `[method path]` -> `openapi-handler`. From
-  this map you can then plug the openapi handlers in any routing solution.
+* Or use `s-exp.legba.handler/openapi-map`: from an OpenAPI file and a map of
+  `[method path]` -> `handler`, it will return a new map of `[method path]` ->
+  `OpenAPI-handler` (which adds all the validation required from the schema
+  provided). From this map you can then plug the OpenAPI handlers in any routing
+  solution and compose as you prefer.
   
-## Installation 
+## Installation
 
 For now it's tools.deps only until an alpha is out.
 

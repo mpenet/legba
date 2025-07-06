@@ -11,7 +11,7 @@
    :key-fn keyword
    :query-string-params-key :params})
 
-(defn openapi-routes
+(defn openapi-map
   "From a map of [method path] -> ring handler returns a map of [method path] ->
   openapi-wrapped-handler"
   [routes schema opts]
@@ -36,7 +36,7 @@
   (let [{:as opts :keys [schema not-found-response]}
         (merge default-options opts)
         schema (schema/load-schema schema)
-        openapi-routes (openapi-routes routes schema opts)
+        openapi-routes (openapi-map routes schema opts)
         router (router/router schema openapi-routes opts)]
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as _match :keys [handler path-params]}

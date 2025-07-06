@@ -7,7 +7,7 @@
 -  [`s-exp.legba.content-type`](#s-exp.legba.content-type) 
     -  [`match-schema-content-type`](#s-exp.legba.content-type/match-schema-content-type)
 -  [`s-exp.legba.handler`](#s-exp.legba.handler) 
-    -  [`make-handler`](#s-exp.legba.handler/make-handler) - Takes a regular RING handler returns a handler that will apply openapi validation from the supplied <code>schema</code> for a set of <code>coords</code> (method path).
+    -  [`make-handler`](#s-exp.legba.handler/make-handler) - Takes a regular RING handler returns a handler that will apply openapi validation from the supplied <code>schema</code> for a given <code>method</code> and <code>path</code>.
 -  [`s-exp.legba.json`](#s-exp.legba.json)  - Simple utils to convert to and from jsonNode.
     -  [`-json-node->clj`](#s-exp.legba.json/-json-node->clj)
     -  [`JsonNodeToClj`](#s-exp.legba.json/JsonNodeToClj)
@@ -75,7 +75,7 @@ Default options used by openapi-handler
 Same as [`openapi-handler*`](#s-exp.legba/openapi-handler*) but wraps with
   [`s-exp.legba.middleware/wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) middleware turning exceptions
   into nicely formatted error responses
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L46-L52">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L47-L53">Source</a></sub></p>
 
 ## <a name="s-exp.legba/openapi-handler*">`openapi-handler*`</a><a name="s-exp.legba/openapi-handler*"></a>
 ``` clojure
@@ -87,7 +87,7 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
   of routes to openapi handlers then creates a handler that will dispatch on the
   appropriate openapi handler from a potential router match. If not match is
   found, returns `not-found-response` (opts)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L29-L44">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L30-L45">Source</a></sub></p>
 
 ## <a name="s-exp.legba/openapi-routes">`openapi-routes`</a><a name="s-exp.legba/openapi-routes"></a>
 ``` clojure
@@ -97,7 +97,7 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
 
 From a map of [method path] -> ring handler returns a map of [method path] ->
   openapi-wrapped-handler
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L14-L27">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L14-L28">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.content-type">s-exp.legba.content-type</a>
@@ -125,11 +125,11 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 ## <a name="s-exp.legba.handler/make-handler">`make-handler`</a><a name="s-exp.legba.handler/make-handler"></a>
 ``` clojure
 
-(make-handler handler schema [method path] opts)
+(make-handler handler schema method path opts)
 ```
 
 Takes a regular RING handler returns a handler that will apply openapi
-  validation from the supplied `schema` for a set of `coords` (method path)
+  validation from the supplied `schema` for a given `method` and `path`
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/handler.clj#L5-L25">Source</a></sub></p>
 
 -----
@@ -408,38 +408,38 @@ Creates a reitit router by method/path
 ## <a name="s-exp.legba.schema/get-schema">`get-schema`</a><a name="s-exp.legba.schema/get-schema"></a>
 ``` clojure
 
-(get-schema schema schema-resource-file ptr)
+(get-schema json-schema-factory schema-resource-file ptr)
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L57-L62">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L28-L34">Source</a></sub></p>
 
 ## <a name="s-exp.legba.schema/load-schema">`load-schema`</a><a name="s-exp.legba.schema/load-schema"></a>
 ``` clojure
 
 (load-schema schema-resource-file)
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L32-L55">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L36-L52">Source</a></sub></p>
 
 ## <a name="s-exp.legba.schema/schema-validator-config">`schema-validator-config`</a><a name="s-exp.legba.schema/schema-validator-config"></a>
 
 
 
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L24-L30">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L20-L26">Source</a></sub></p>
 
 ## <a name="s-exp.legba.schema/validate!">`validate!`</a><a name="s-exp.legba.schema/validate!"></a>
 ``` clojure
 
 (validate!
- {:as schema, :keys [schema-resource-file]}
+ {:as _schema, :keys [schema-resource-file json-schema-factory]}
  sub-schema
  val
  &
  {:as _opts, :keys [validation-result], :or {validation-result validation-result}})
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L76-L89">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L66-L81">Source</a></sub></p>
 
 ## <a name="s-exp.legba.schema/validation-result">`validation-result`</a><a name="s-exp.legba.schema/validation-result"></a>
 ``` clojure
 
 (validation-result r)
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L64-L74">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/schema.clj#L54-L64">Source</a></sub></p>
