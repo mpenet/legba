@@ -2,26 +2,26 @@
 
 <img src="https://github.com/user-attachments/assets/7b36b294-8ada-4ef6-bbcc-4e9be4b101f7" width="100" height="100" style="float:left;">
 
-*Legba* is a library aimed at building **fully OpenAPI 3.1 compliant** services
-in Clojure.
+*Legba* is a library designed for building **fully OpenAPI 3.1 compliant**
+services in Clojure.
 
-Legba provides simple paths to run OpenAPI based servers. It starts from the
-idea that the OpenAPI schema file should be the corner-stone of your service
-definition. Instead of generating it from routes in another DSL like some other
-libraries do, legba uses that schema to generate appropriate routes and wrap
-handlers you supply with OpenAPI validation.
+Legba streamlines the creation of OpenAPI based servers by emphasizing the
+OpenAPI schema file as the foundation of your service definition. Unlike other
+libraries that generate the schema from routes defined in a separate DSL, Legba
+takes the opposite approach: it uses your schema to create the necessary routes
+and wraps your supplied handlers with OpenAPI validation.
 
-That doesn't prevent you to generate parts of your schemas with libraries such
-as [pact](https://github.com/mpenet/pact), but we want to ensure that the
-OpenAPI file that ends up being exposed to your users is not limited in any way
-and is reviewable/editable. 
+While you can still leverage libraries like
+[pact](https://github.com/mpenet/pact) to generate portions of your schemas,
+Legba ensures that the final OpenAPI file exposed to your users remains
+unrestricted, reviewable, and editable.
 
 
 ## Legba goals
 
 * Provide **rock solid**, **full coverage** of OpenAPI 3.1 spec
 
-* Support all the bells & whistles like `$refs`, conditionals, etc
+* Support all the bells & whistles such as `$refs`, conditionals, etc
 
 * **[Great
   performance](https://www.creekservice.org/json-schema-validation-comparison/performance)**,
@@ -44,18 +44,18 @@ and is reviewable/editable.
 
 You can either:
 
-* Rely on `s-exp.legba/openapi-handler`: from an OpenAPI file and a map of
-  `[method path]` -> `handler` that matches the routes of the schema, returns a
-  single handler that will manage routing (via reitit) and perform validation
-  and marshaling of the data according to the schema (via
+* Either use `s-exp.legba.handler/handlers`: taking an OpenAPI file and a map of
+  `[method path]` -> `handler`, it will return a new map of `[method path]` ->
+  `handler`, with all handlers wrapped with an OpenAPI validation
+  middleware. From this map you can then plug the OpenAPI handlers in any
+  routing solution and compose as you prefer.
+
+* Or use `s-exp.legba/routing-handler`: taking an OpenAPI file and a map of
+  `[method path]` -> `handler` that matches the routes of the OpenAPI schema,
+  returns a single handler that will manage routing via reitit and perform
+  validation and marshaling of the data according to the schema (via
   networknt/json-schema-validator). This handler can simply be plugged to a RING
   server adapter and you're good to go.
-  
-* Or use `s-exp.legba.handler/openapi-map`: from an OpenAPI file and a map of
-  `[method path]` -> `handler`, it will return a new map of `[method path]` ->
-  `OpenAPI-handler` (which adds all the validation required from the schema
-  provided). From this map you can then plug the OpenAPI handlers in any routing
-  solution and compose as you prefer.
   
 ## Installation
 
@@ -70,7 +70,7 @@ com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
 ``` clj
 (require '[s-exp.legba :as l])
 
-(l/openapi-handler {[:get "/item/{itemId}"]
+(l/routing-handler {[:get "/item/{itemId}"]
                     (fn [_request]
                       {...})
                     [:get "/items"]
@@ -82,8 +82,7 @@ com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
                     [:post "/items"]
                     (fn [_request]
                       {..})}
-                   ;; path to a resource file
-                   :schema "schema/oas/3.1/catalog.json"
+                   "classpath://schema/oas/3.1/catalog.json"
                    ;; {...} ; options
                    )
 ```

@@ -28,8 +28,7 @@
 (defn get-schema ^JsonSchema
   [^JsonSchemaFactory json-schema-factory schema-resource-file ptr]
   (.getSchema json-schema-factory
-              (.resolve (SchemaLocation/of
-                         (format "classpath://%s" schema-resource-file))
+              (.resolve (SchemaLocation/of schema-resource-file)
                         (str "#" ptr))
               ^SchemaValidatorsConfig schema-validator-config))
 
@@ -43,7 +42,7 @@
                             (.defaultMetaSchemaIri (.getIri (OpenApi31/getInstance)))
                             (.enableSchemaCache true))))
         openapi-schema (-> schema-factory
-                           (get-schema "schema/oas/3.1/petstore.json" "")
+                           (get-schema schema-resource-file "")
                            .getSchemaNode
                            (json/json-node->clj {:key-fn identity})
                            (json-pointer/annotate-tree))]

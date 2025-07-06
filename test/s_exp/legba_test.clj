@@ -32,14 +32,14 @@
                  :id item-id
                  :value 1.0}
           :status 201}}}]
-  (l/openapi-handler {[:get "/item/{itemId}"]
+  (l/routing-handler {[:get "/item/{itemId}"]
                       (fn [_request] item-by-id-response)
                       [:get "/items"]
                       (fn [_request] list-items-response)
                       [:get "/search"]
                       (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)}
-                     :schema "schema/oas/3.1/petstore.json"))
+                     "classpath://schema/oas/3.1/petstore.json"))
 
 (deftest requests-test
   (let [h (make-handler {})]
