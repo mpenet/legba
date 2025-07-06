@@ -60,7 +60,7 @@
 
   Options:
 
-  * `:not-found-response` - defaults to `{:status 404 :body " Not found "}`
+  * `:not-found-response` - defaults to `{:status 404 :body \" Not found \"}`
 
   * `:key-fn` - Control map keys decoding when turning jackson JsonNodes to clj
     data for the handler - default to `keyword`
