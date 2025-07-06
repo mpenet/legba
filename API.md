@@ -2,7 +2,7 @@
 -  [`s-exp.legba`](#s-exp.legba) 
     -  [`default-options`](#s-exp.legba/default-options) - Default options used by openapi-handler.
     -  [`handlers`](#s-exp.legba/handlers) - From a map of [method path] -> ring handler returns a map of [method path] -> openapi-wrapped-handler.
-    -  [`routing-handler`](#s-exp.legba/routing-handler) - Same as <code>openapi-handler*</code> but wraps with <code>s-exp.legba.middleware/wrap-error-response</code> middleware turning exceptions into nicely formatted error responses.
+    -  [`routing-handler`](#s-exp.legba/routing-handler) - Same as <code>routing-handler*</code> but wraps with <code>s-exp.legba.middleware/wrap-error-response</code> middleware turning exceptions into nicely formatted error responses.
     -  [`routing-handler*`](#s-exp.legba/routing-handler*) - Takes a map of routes as [method path] -> ring-handler, turns them into a map of routes to openapi handlers then creates a handler that will dispatch on the appropriate openapi handler from a potential router match.
 -  [`s-exp.legba.content-type`](#s-exp.legba.content-type) 
     -  [`match-schema-content-type`](#s-exp.legba.content-type/match-schema-content-type)
@@ -27,18 +27,18 @@
     -  [`wrap-error-response`](#s-exp.legba.middleware/wrap-error-response)
     -  [`wrap-validation`](#s-exp.legba.middleware/wrap-validation) - Takes a regular RING handler returns a handler that will apply openapi validation from the supplied <code>schema</code> for a given <code>method</code> and <code>path</code>.
 -  [`s-exp.legba.request`](#s-exp.legba.request) 
-    -  [`conform-request`](#s-exp.legba.request/conform-request)
     -  [`cookie-params-schema`](#s-exp.legba.request/cookie-params-schema)
     -  [`path-params-schema`](#s-exp.legba.request/path-params-schema)
     -  [`query-params-schema`](#s-exp.legba.request/query-params-schema)
-    -  [`request->conform-body`](#s-exp.legba.request/request->conform-body)
-    -  [`request->conform-cookie-params`](#s-exp.legba.request/request->conform-cookie-params)
-    -  [`request->conform-path-params`](#s-exp.legba.request/request->conform-path-params)
-    -  [`request->conform-query-params`](#s-exp.legba.request/request->conform-query-params)
+    -  [`validate`](#s-exp.legba.request/validate)
+    -  [`validate-body`](#s-exp.legba.request/validate-body)
+    -  [`validate-cookie-params`](#s-exp.legba.request/validate-cookie-params)
+    -  [`validate-path-params`](#s-exp.legba.request/validate-path-params)
+    -  [`validate-query-params`](#s-exp.legba.request/validate-query-params)
 -  [`s-exp.legba.response`](#s-exp.legba.response) 
-    -  [`conform-response`](#s-exp.legba.response/conform-response)
-    -  [`conform-response-body`](#s-exp.legba.response/conform-response-body)
-    -  [`conform-response-headers`](#s-exp.legba.response/conform-response-headers)
+    -  [`validate`](#s-exp.legba.response/validate)
+    -  [`validate-response-body`](#s-exp.legba.response/validate-response-body)
+    -  [`validate-response-headers`](#s-exp.legba.response/validate-response-headers)
 -  [`s-exp.legba.router`](#s-exp.legba.router) 
     -  [`match-route`](#s-exp.legba.router/match-route) - Matches <code>method</code> <code>path</code> on <code>router</code>.
     -  [`router`](#s-exp.legba.router/router) - Creates a reitit router by method/path.
@@ -93,7 +93,7 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 (routing-handler routes schema & {:as opts})
 ```
 
-Same as `openapi-handler*` but wraps with
+Same as [`routing-handler*`](#s-exp.legba/routing-handler*) but wraps with
   [`s-exp.legba.middleware/wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) middleware turning exceptions
   into nicely formatted error responses
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L91-L97">Source</a></sub></p>
@@ -111,7 +111,21 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
 
   Options:
 
-  * `:not-found-response` - defaults to `{:status 404 :body 
+  * `:not-found-response` - defaults to `{:status 404 :body " Not found "}`
+
+  * `:key-fn` - Control map keys decoding when turning jackson JsonNodes to clj
+    data for the handler - default to `keyword`
+
+  * `:query-string-params-key` - where to find the decoded query-string
+     parameters - defaults to `:params`
+
+  * `:validation-result` - function that controls how to turn
+    `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+    to [`s-exp.legba.schema/validation-result`](#s-exp.legba.schema/validation-result)
+
+  * `:extra-routes` - extra routes to be passed to the underlying reitit router
+    (using `{:syntax :bracket}`)
+  
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L55-L89">Source</a></sub></p>
 
 -----
@@ -296,13 +310,6 @@ Takes a regular RING handler returns a handler that will apply openapi
 
 
 
-## <a name="s-exp.legba.request/conform-request">`conform-request`</a><a name="s-exp.legba.request/conform-request"></a>
-``` clojure
-
-(conform-request request schema sub-schema opts)
-```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L107-L114">Source</a></sub></p>
-
 ## <a name="s-exp.legba.request/cookie-params-schema">`cookie-params-schema`</a><a name="s-exp.legba.request/cookie-params-schema"></a>
 
 
@@ -321,31 +328,38 @@ Takes a regular RING handler returns a handler that will apply openapi
 
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L16-L16">Source</a></sub></p>
 
-## <a name="s-exp.legba.request/request->conform-body">`request->conform-body`</a><a name="s-exp.legba.request/request->conform-body"></a>
+## <a name="s-exp.legba.request/validate">`validate`</a><a name="s-exp.legba.request/validate"></a>
 ``` clojure
 
-(request->conform-body {:as request, :keys [body headers]} schema sub-schema opts)
+(validate request schema sub-schema opts)
+```
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L107-L114">Source</a></sub></p>
+
+## <a name="s-exp.legba.request/validate-body">`validate-body`</a><a name="s-exp.legba.request/validate-body"></a>
+``` clojure
+
+(validate-body {:as request, :keys [body headers]} schema sub-schema opts)
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L77-L105">Source</a></sub></p>
 
-## <a name="s-exp.legba.request/request->conform-cookie-params">`request->conform-cookie-params`</a><a name="s-exp.legba.request/request->conform-cookie-params"></a>
+## <a name="s-exp.legba.request/validate-cookie-params">`validate-cookie-params`</a><a name="s-exp.legba.request/validate-cookie-params"></a>
 ``` clojure
 
-(request->conform-cookie-params request schema sub-schema opts)
+(validate-cookie-params request schema sub-schema opts)
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L42-L60">Source</a></sub></p>
 
-## <a name="s-exp.legba.request/request->conform-path-params">`request->conform-path-params`</a><a name="s-exp.legba.request/request->conform-path-params"></a>
+## <a name="s-exp.legba.request/validate-path-params">`validate-path-params`</a><a name="s-exp.legba.request/validate-path-params"></a>
 ``` clojure
 
-(request->conform-path-params request schema sub-schema opts)
+(validate-path-params request schema sub-schema opts)
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L62-L75">Source</a></sub></p>
 
-## <a name="s-exp.legba.request/request->conform-query-params">`request->conform-query-params`</a><a name="s-exp.legba.request/request->conform-query-params"></a>
+## <a name="s-exp.legba.request/validate-query-params">`validate-query-params`</a><a name="s-exp.legba.request/validate-query-params"></a>
 ``` clojure
 
-(request->conform-query-params request schema sub-schema {:as opts, :keys [query-string-params-key]})
+(validate-query-params request schema sub-schema {:as opts, :keys [query-string-params-key]})
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L20-L40">Source</a></sub></p>
 
@@ -357,24 +371,24 @@ Takes a regular RING handler returns a handler that will apply openapi
 
 
 
-## <a name="s-exp.legba.response/conform-response">`conform-response`</a><a name="s-exp.legba.response/conform-response"></a>
+## <a name="s-exp.legba.response/validate">`validate`</a><a name="s-exp.legba.response/validate"></a>
 ``` clojure
 
-(conform-response response schema sub-schema opts)
+(validate response schema sub-schema opts)
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L62-L66">Source</a></sub></p>
 
-## <a name="s-exp.legba.response/conform-response-body">`conform-response-body`</a><a name="s-exp.legba.response/conform-response-body"></a>
+## <a name="s-exp.legba.response/validate-response-body">`validate-response-body`</a><a name="s-exp.legba.response/validate-response-body"></a>
 ``` clojure
 
-(conform-response-body {:as response, :keys [status body headers], :or {status 200}} schema sub-schema opts)
+(validate-response-body {:as response, :keys [status body headers], :or {status 200}} schema sub-schema opts)
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L8-L42">Source</a></sub></p>
 
-## <a name="s-exp.legba.response/conform-response-headers">`conform-response-headers`</a><a name="s-exp.legba.response/conform-response-headers"></a>
+## <a name="s-exp.legba.response/validate-response-headers">`validate-response-headers`</a><a name="s-exp.legba.response/validate-response-headers"></a>
 ``` clojure
 
-(conform-response-headers {:as response, :keys [status], :or {status 200}} schema sub-schema opts)
+(validate-response-headers {:as response, :keys [status], :or {status 200}} schema sub-schema opts)
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L44-L60">Source</a></sub></p>
 
@@ -393,7 +407,7 @@ Takes a regular RING handler returns a handler that will apply openapi
 ```
 
 Matches `method` `path` on [`router`](#s-exp.legba.router/router)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L29-L38">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L28-L37">Source</a></sub></p>
 
 ## <a name="s-exp.legba.router/router">`router`</a><a name="s-exp.legba.router/router"></a>
 ``` clojure
@@ -402,7 +416,7 @@ Matches `method` `path` on [`router`](#s-exp.legba.router/router)
 ```
 
 Creates a reitit router by method/path
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L5-L27">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L4-L26">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.schema">s-exp.legba.schema</a>
