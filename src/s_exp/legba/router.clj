@@ -1,6 +1,5 @@
 (ns s-exp.legba.router
-  (:require [exoscale.ex :as ex]
-            [reitit.core :as r]))
+  (:require [reitit.core :as r]))
 
 (defn router
   "Creates a reitit router by method/path"
