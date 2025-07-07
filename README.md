@@ -29,7 +29,8 @@ using *legba*.
   performance](https://www.creekservice.org/json-schema-validation-comparison/performance)**,
   being built on
   [networknt/json-schema-validator](https://github.com/networknt/json-schema-validator),
-  which consistently ranks on the top of the java based json-schema validators.
+  which consistently ranks on the top of the java based json-schema validators
+  for both performance and correctness.
 
 * Be server adapter agnostic, it should be **usable with any RING compliant
   server adapter** (jetty, http-kit, aleph, hirundo, etc...)
