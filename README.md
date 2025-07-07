@@ -2,6 +2,9 @@
 <img src="https://github.com/user-attachments/assets/56ce1920-445a-4376-932d-f2115f6e4f5c" width="200" height="200" style="float:left;">
 
 
+> He who controls access between the two, deciding who and what can pass
+> through
+
 *Legba* is a library designed for building **fully OpenAPI 3.1 compliant**
 services in Clojure.
 
@@ -43,6 +46,9 @@ using *legba*.
   with routing for a given schema, built on the aforementioned primitives
 
 * Provide **detailed**, informative and **customizable error messages**
+
+* Works with both **JSON and YAML OpenAPI schemas**
+
 
 ## How does it work
 

@@ -11,8 +11,10 @@
     :keys [item-by-id-response
            list-items-response
            post-items-response
-           search-items-response]
-    :or {item-by-id-response
+           search-items-response
+           schema-path]
+    :or {schema-path "classpath://schema/oas/3.1/store.json"
+         item-by-id-response
          {:body {:id item-id
                  :name "foo"
                  :value 1.0}}
@@ -39,7 +41,12 @@
                       [:get "/search"]
                       (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)}
-                     "classpath://schema/oas/3.1/store.json"))
+                     schema-path))
+
+(deftest requests-test-yaml
+  (let [h (make-handler {:schema-path "classpath://schema/oas/3.1/store.yaml"})]
+    (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
+    (is (string? (:body (h {:request-method :get :uri (str "/item/" item-id)}))))))
 
 (deftest requests-test
   (let [h (make-handler {})]
