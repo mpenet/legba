@@ -4,7 +4,9 @@
             [s-exp.legba.json :as json]
             [s-exp.legba.schema :as schema]))
 
-(defn- match->params-schema-fn [param-type]
+(defn- match->params-schema-fn
+  "Returns a fn that will match schema \"parameters\" by `param-type`"
+  [param-type]
   (fn [sub-schema]
     (not-empty
      (into {}
@@ -13,11 +15,20 @@
                      [(keyword (get param "name")) param])))
            (get sub-schema "parameters")))))
 
-(def query-params-schema (match->params-schema-fn "query"))
-(def path-params-schema (match->params-schema-fn "path"))
-(def cookie-params-schema (match->params-schema-fn "cookie"))
+(def query-params-schema
+  "Matches `param-type` for \"query\""
+  (match->params-schema-fn "query"))
+
+(def path-params-schema
+  "Matches `param-type` for \"path\""
+  (match->params-schema-fn "path"))
+
+(def cookie-params-schema
+  "Matches `param-type` for \"cookie\""
+  (match->params-schema-fn "cookie"))
 
 (defn validate-query-params
+  "Performs eventual validation of \"parameters\" of type \"query\""
   [request schema sub-schema {:as opts :keys [query-string-params-key]}]
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[schema-key {:as query-schema :strs [required]}] m-query-params
@@ -40,6 +51,7 @@
   request)
 
 (defn validate-cookie-params
+  "Performs eventual validation of \"parameters\" of type \"cookie\""
   [request schema sub-schema opts]
   (when-let [m-cookie-params (cookie-params-schema sub-schema)]
     (doseq [[schema-key {:as cookie-schema :strs [required]}] m-cookie-params
@@ -60,6 +72,7 @@
   request)
 
 (defn validate-path-params
+  "Performs extensive validation of \"path\" \"parameters\""
   [request schema sub-schema {:as opts :keys [path-params-key]}]
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[schema-key param-schema] m-path-params
@@ -75,6 +88,7 @@
   request)
 
 (defn validate-body
+  "Performs eventual validation of request `:body`"
   [{:as request :keys [body headers]} schema sub-schema opts]
   (let [req-body-schema (get sub-schema "requestBody")]
     (if (get req-body-schema "required")
@@ -105,19 +119,23 @@
       request)))
 
 (defn validate
+  "Performs validation of RING request map"
   [request schema sub-schema opts]
-  ;; validate params
   (-> request
       (validate-path-params schema sub-schema opts)
       (validate-query-params schema sub-schema opts)
       (validate-cookie-params schema sub-schema opts)
       (validate-body schema sub-schema opts)))
 
-(ex/derive ::invalid :s-exp.legba/invalid)
-(ex/derive ::invalid-body :s-exp.legba/invalid)
-(ex/derive ::invalid-path-parameters :s-exp.legba/invalid)
-(ex/derive ::invalid-query-parameters :s-exp.legba/invalid)
-(ex/derive ::invalid-cookie-parameters :s-exp.legba/invalid)
-(ex/derive ::invalid-content-type :s-exp.legba/invalid)
-(ex/derive ::missing-query-parameter :s-exp.legba/invalid)
-(ex/derive ::missing-cookie-parameter :s-exp.legba/invalid)
+;; Derive our own sub-types, the error middleware will catch on
+;; `:s-exp.legba/invalid` and we later dispath on error response multimethod,
+;; `s-exp.legba.middleware/ex->response`, with the leaf types
+(run! #(ex/derive % :s-exp.legba/invalid)
+      [::invalid
+       ::invalid-body
+       ::invalid-path-parameters
+       ::invalid-query-parameters
+       ::invalid-cookie-parameters
+       ::invalid-content-type
+       ::missing-cookie-parameter
+       ::missing-query-parameter])

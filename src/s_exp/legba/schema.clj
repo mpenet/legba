@@ -27,15 +27,21 @@
     (.setOpenAPI3StyleDiscriminators true)
     (.setPathType PathType/JSON_PATH)))
 
-(defn get-schema ^JsonSchema
-  [^JsonSchemaFactory json-schema-factory schema-resource-file ptr]
+(defn get-schema
+  "Returns json-schema from json-schema-factory at `schema-uri`/`json-pointer`"
+  ^JsonSchema
+  [^JsonSchemaFactory json-schema-factory schema-uri json-pointer]
   (.getSchema json-schema-factory
-              (.resolve (SchemaLocation/of schema-resource-file)
-                        (str "#" ptr))
+              (.resolve (SchemaLocation/of schema-uri)
+                        (str "#" json-pointer))
               ^SchemaValidatorsConfig schema-validator-config))
 
 (defn load-schema
-  [^String schema-resource-file]
+  "Loads JSON or YAML schema from `schema-uri` and returns
+  map (of :openapi-schema, :schema-uri, :json-schema-factory) that contains all
+  the necessary information to perform `validate!` calls later (minus a JSON
+  pointer)."
+  [^String schema-uri]
   (let [schema-factory (JsonSchemaFactory/getInstance
                         SpecVersion$VersionFlag/V202012
                         (fn [^JsonSchemaFactory$Builder builder]
@@ -44,15 +50,17 @@
                             (.defaultMetaSchemaIri (.getIri (OpenApi31/getInstance)))
                             (.enableSchemaCache true))))
         openapi-schema (-> schema-factory
-                           (get-schema schema-resource-file "")
+                           (get-schema schema-uri "")
                            .getSchemaNode
                            (json/json-node->clj {:key-fn identity})
                            (json-pointer/annotate-tree))]
     {:openapi-schema openapi-schema
-     :schema-resource-file schema-resource-file
+     :schema-uri schema-uri
      :json-schema-factory schema-factory}))
 
 (defn validation-result
+  "Default validation result output function, can be overidden via
+  `:validation-result` option of `s-exp.legba/*` calls"
   [^ValidationResult r]
   (let [vms (.getValidationMessages r)]
     (when-not (empty? vms)
@@ -65,14 +73,15 @@
             vms))))
 
 (defn validate!
-  [{:as _schema :keys [schema-resource-file json-schema-factory]}
+  "Validates a `val` against `schema`"
+  [{:as _schema :keys [schema-uri json-schema-factory]}
    sub-schema val
    & {:as _opts
       :keys [validation-result]
       :or {validation-result validation-result}}]
   (let [ptr (:json-pointer (meta sub-schema))
         ^JsonSchema schema (get-schema json-schema-factory
-                                       schema-resource-file ptr)]
+                                       schema-uri ptr)]
     (validation-result
      (if (instance? JsonNode val)
        (.validate schema ^JsonNode val

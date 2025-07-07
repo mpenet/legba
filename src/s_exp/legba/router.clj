@@ -2,7 +2,9 @@
   (:require [reitit.core :as r]))
 
 (defn router
-  "Creates a reitit router by method/path"
+  "Creates a reitit router that matches by method/path for a given `schema`.
+  `extra-routes` can be passed to add non openapi centric routes to the routing
+  table"
   [{:as _schema :keys [openapi-schema]} openapi-handlers & {:as _opts :keys [extra-routes]}]
   (-> (reduce (fn [routers-m [method & route]]
                 (update routers-m

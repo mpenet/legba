@@ -18,6 +18,7 @@
       (str/replace "/" "~1")))
 
 (defn pointer-append
+  "Adds value to existing json-pointer and returns a new one"
   [pointer val]
   (str pointer "/" (encode-token val)))
 
@@ -50,11 +51,12 @@
           (parse-json-pointer pointer)))
 
 (defn add-pointer
+  "Adds :json-pointer metadata to `node`"
   [node pointer]
   (vary-meta node assoc :json-pointer pointer))
 
 (defn annotate-tree
-  "Walks tree and add :json-pointer to every node"
+  "Walks tree and add `:json-pointer` metadata to every node"
   ([node]
    (annotate-tree node ""))
   ([node pointer]

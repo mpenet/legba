@@ -1,12 +1,12 @@
 (ns s-exp.legba.content-type
-  (:require
-   [clojure.string :as str]))
+  (:require [clojure.string :as str]))
 
 (defn- match?
-  [ptn s]
-  (or (= ptn s)
-      (loop [[ptn0 & ptn :as rptn] ptn
-             [s0 & s :as rs] s]
+  "Matches `pattern` (with eventual wildcard) to `content-type-value`"
+  [pattern content-type-value]
+  (or (= pattern content-type-value)
+      (loop [[ptn0 & ptn :as rptn] pattern
+             [s0 & s :as rs] content-type-value]
         (cond
           (and (zero? (count ptn))
                (zero? (count s)))
@@ -21,6 +21,7 @@
            (recur rptn s))))))
 
 (defn match-schema-content-type
+  "Matches `content-type` with `schema`, return resulting `sub-schema`"
   [schema content-type]
   (let [content (get schema "content")
         content-types (some-> content-type (str/split #";" 1))]

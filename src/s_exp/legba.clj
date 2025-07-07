@@ -77,8 +77,7 @@
     to `s-exp.legba.schema/validation-result`
 
   * `:extra-routes` - extra routes to be passed to the underlying reitit router
-    (using `{:syntax :bracket}`)
-  "
+    (using `{:syntax :bracket}`)"
   [routes schema & {:as opts :keys [path-params-key]}]
   (let [{:as opts :keys [not-found-response]}
         (merge default-options opts)

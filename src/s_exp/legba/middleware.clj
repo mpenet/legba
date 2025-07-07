@@ -36,6 +36,8 @@
      :body (assoc data :message (ex-message e))}))
 
 (defn wrap-error-response
+  "Wraps handler with error checking middleware that will transform validation
+  Exceptions to equivalent http response, as infered per `ex->response`"
   [handler]
   (fn [req]
     (ex/try+

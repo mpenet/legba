@@ -6,6 +6,7 @@
             [s-exp.legba.schema :as schema]))
 
 (defn validate-response-body
+  "Performs eventual validation of response body"
   [{:as response
     :keys [status body headers]
     :or {status 200}}
@@ -42,6 +43,7 @@
                        :message "Invalid Response Content-Type"})))))
 
 (defn validate-response-headers
+  "Performs validation of response headers"
   [{:as response :keys [status] :or {status 200}}
    schema sub-schema opts]
   (when-let [headers-schema (or (some-> sub-schema (get-in ["responses" (str status) "headers"]))
@@ -60,12 +62,16 @@
   response)
 
 (defn validate
+  "Performs validation of RING response map"
   [response schema sub-schema opts]
   (-> response
       (validate-response-headers schema sub-schema opts)
       (validate-response-body schema sub-schema opts)))
 
-(ex/derive ::invalid-header :s-exp.legba/invalid)
-(ex/derive ::invalid-body :s-exp.legba/invalid)
-(ex/derive ::invalid-format-for-status :s-exp.legba/invalid)
-(ex/derive ::invalid-content-type :s-exp.legba/invalid)
+;; Derive our own sub-types, the error middleware will catch on
+;; `:s-exp.legba/invalid` and we later dispath on error response multimethod,
+;; `s-exp.legba.middleware/ex->response`, with the leaf types
+(run! #(ex/derive % :s-exp.legba/invalid)
+      [::invalid-header ::invalid-body
+       ::invalid-format-for-status
+       ::invalid-content-type])

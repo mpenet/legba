@@ -103,25 +103,31 @@
                     {:node node}))))
 
 (defn json-node->clj
+  "Takes a Jackson JsonNode returns an equivalent clj datastructure.
+  `:key-fn` controls how map-entries keys are decoded, defaulting to `keyword`"
   ([node]
    (-json-node->clj node {:key-fn keyword}))
   ([node opts]
    (-json-node->clj node opts)))
 
 (defn str->json-node
+  "Takes a json-str String and returns a Jackson JsonNode"
   [^String json-str]
   (when json-str
     (.readTree ^ObjectMapper jsonista/default-object-mapper json-str)))
 
 (defn json-node->str
+  "Takes a Jackson JsonNode and returns an equivalent String value"
   [^JsonNode json-node]
   (.writeValueAsString ^ObjectMapper jsonista/default-object-mapper json-node))
 
 (defn clj->json-node
+  "Takes a clj value and converts it to a Jackson JsonNode"
   [x]
   (.valueToTree ^ObjectMapper jsonista/default-object-mapper x))
 
 (defn json-content-type?
+  "Returns true if `content-type` is `application/json`"
   [content-type]
   (re-find #"(?i)application/json(:?[;]|$)"
            content-type))
