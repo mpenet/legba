@@ -63,7 +63,7 @@
 
 
 Default options used by openapi-handler
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L8-L12">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L9-L14">Source</a></sub></p>
 
 ## <a name="s-exp.legba/handlers">`handlers`</a><a name="s-exp.legba/handlers"></a>
 ``` clojure
@@ -80,12 +80,12 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
     data for the handler - default to `keyword`
 
   * `:query-string-params-key` - where to find the decoded query-string
-     parameters - defaults to `:params`
+     parameters - defaults to `:query-params`
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
     to [`s-exp.legba.schema/validation-result`](#s-exp.legba.schema/validation-result)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L27-L53">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L29-L57">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler">`routing-handler`</a><a name="s-exp.legba/routing-handler"></a>
 ``` clojure
@@ -96,12 +96,12 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 Same as [`routing-handler*`](#s-exp.legba/routing-handler*) but wraps with
   [`s-exp.legba.middleware/wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) middleware turning exceptions
   into nicely formatted error responses
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L91-L97">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L98-L106">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler*">`routing-handler*`</a><a name="s-exp.legba/routing-handler*"></a>
 ``` clojure
 
-(routing-handler* routes schema & {:as opts})
+(routing-handler* routes schema & {:as opts, :keys [path-params-key]})
 ```
 
 Takes a map of routes as [method path] -> ring-handler, turns them into a map
@@ -117,7 +117,7 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
     data for the handler - default to `keyword`
 
   * `:query-string-params-key` - where to find the decoded query-string
-     parameters - defaults to `:params`
+     parameters - defaults to `:query-params`
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
@@ -126,7 +126,7 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
   * `:extra-routes` - extra routes to be passed to the underlying reitit router
     (using `{:syntax :bracket}`)
   
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L55-L89">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L59-L96">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.content-type">s-exp.legba.content-type</a>
@@ -283,14 +283,14 @@ Resolves a JSON Pointer against a given JSON data structure.
 
 
 
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L28-L30">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L26-L28">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-error-response">`wrap-error-response`</a><a name="s-exp.legba.middleware/wrap-error-response"></a>
 ``` clojure
 
 (wrap-error-response handler)
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L40-L48">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L38-L46">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-validation">`wrap-validation`</a><a name="s-exp.legba.middleware/wrap-validation"></a>
 ``` clojure
@@ -300,7 +300,7 @@ Resolves a JSON Pointer against a given JSON data structure.
 
 Takes a regular RING handler returns a handler that will apply openapi
   validation from the supplied `schema` for a given `method` and `path`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L6-L26">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L6-L24">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.request">s-exp.legba.request</a>
@@ -352,7 +352,7 @@ Takes a regular RING handler returns a handler that will apply openapi
 ## <a name="s-exp.legba.request/validate-path-params">`validate-path-params`</a><a name="s-exp.legba.request/validate-path-params"></a>
 ``` clojure
 
-(validate-path-params request schema sub-schema opts)
+(validate-path-params request schema sub-schema {:as opts, :keys [path-params-key]})
 ```
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L62-L75">Source</a></sub></p>
 
@@ -403,7 +403,7 @@ Takes a regular RING handler returns a handler that will apply openapi
 ## <a name="s-exp.legba.router/match-route">`match-route`</a><a name="s-exp.legba.router/match-route"></a>
 ``` clojure
 
-(match-route router method path)
+(match-route router method path {:as _opts, :keys [path-params-key]})
 ```
 
 Matches `method` `path` on [`router`](#s-exp.legba.router/router)

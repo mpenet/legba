@@ -141,12 +141,10 @@
               "in" "query"},
              :message "Missing Required Query Parameter"}}
            (h {:request-method :get
-               :uri "/search"
-               :params {}})))
-
+               :uri "/search"})))
     (is (= 200 (:status (h {:request-method :get
                             :uri "/search"
-                            :params {:term "yolo"}}))))))
+                            :query-string "term=yolo"}))))))
 
 (deftest response-test
   (let [h (make-handler {:post-items-response {}})

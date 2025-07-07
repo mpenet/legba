@@ -27,11 +27,11 @@
 
 (defn match-route
   "Matches `method` `path` on `router`"
-  [router method path]
+  [router method path {:as _opts :keys [path-params-key]}]
   (when-let [r (get router method)]
     (when-let [{:as _match :keys [data path-params]} (r/match-by-path r path)]
       (cond-> data
         (seq path-params)
-        (assoc :path-params (update-keys path-params keyword))
+        (assoc path-params-key (update-keys path-params keyword))
         :then
         (update :handler deref)))))

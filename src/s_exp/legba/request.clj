@@ -22,7 +22,7 @@
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[schema-key {:as query-schema :strs [required]}] m-query-params
             :let [param-val (get-in request [query-string-params-key
-                                             schema-key]
+                                             (name schema-key)]
                                     ::missing)
                   _ (when (and required (= ::missing param-val))
                       (throw (ex-info "Missing Required Query Parameter"
@@ -60,10 +60,10 @@
   request)
 
 (defn validate-path-params
-  [request schema sub-schema opts]
+  [request schema sub-schema {:as opts :keys [path-params-key]}]
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[schema-key param-schema] m-path-params
-            :let [param-val (get-in request [:path-params schema-key])]]
+            :let [param-val (get-in request [path-params-key schema-key])]]
       (when-let [errors (schema/validate! schema
                                           (get param-schema "schema")
                                           (pr-str param-val)

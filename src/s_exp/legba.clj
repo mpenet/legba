@@ -1,6 +1,7 @@
 (ns s-exp.legba
   (:require [clojure.string :as str]
             [exoscale.ex :as ex]
+            [ring.middleware.params :as ring-params]
             [s-exp.legba.middleware :as m]
             [s-exp.legba.router :as router]
             [s-exp.legba.schema :as schema]))
@@ -9,7 +10,8 @@
   "Default options used by openapi-handler"
   {:not-found-response {:status 404 :body "Not found"}
    :key-fn keyword
-   :query-string-params-key :params})
+   :query-string-params-key :query-params
+   :path-params-key :path-params})
 
 (defn- ensure-handler-coverage!
   "Checks that a map of openapi-handlers covers all paths defined by the schema"
@@ -34,7 +36,7 @@
     data for the handler - default to `keyword`
 
   * `:query-string-params-key` - where to find the decoded query-string
-     parameters - defaults to `:params`
+     parameters - defaults to `:query-params`
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
@@ -44,11 +46,13 @@
     (reduce (-> (fn [m [[method path :as coords] handler]]
                   (assoc m
                          coords
-                         (m/wrap-validation handler
-                                            schema
-                                            method
-                                            path
-                                            opts))))
+                         (-> handler
+                             (m/wrap-validation
+                              schema
+                              method
+                              path
+                              opts)
+                             (ring-params/wrap-params)))))
             {}
             routes)))
 
@@ -66,7 +70,7 @@
     data for the handler - default to `keyword`
 
   * `:query-string-params-key` - where to find the decoded query-string
-     parameters - defaults to `:params`
+     parameters - defaults to `:query-params`
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
@@ -75,7 +79,7 @@
   * `:extra-routes` - extra routes to be passed to the underlying reitit router
     (using `{:syntax :bracket}`)
   "
-  [routes schema & {:as opts}]
+  [routes schema & {:as opts :keys [path-params-key]}]
   (let [{:as opts :keys [not-found-response]}
         (merge default-options opts)
         schema (schema/load-schema schema)
@@ -84,8 +88,11 @@
         router (router/router schema handlers opts)]
     (fn [{:as request :keys [request-method uri]}]
       (if-let [{:as _match :keys [handler path-params]}
-               (router/match-route router request-method uri)]
-        (handler (assoc request :path-params path-params))
+               (router/match-route router request-method uri opts)]
+        (cond-> request
+          path-params
+          (assoc path-params-key path-params)
+          :then handler)
         not-found-response))))
 
 (defn routing-handler
@@ -93,7 +100,9 @@
   `s-exp.legba.middleware/wrap-error-response` middleware turning exceptions
   into nicely formatted error responses"
   [routes schema & {:as opts}]
-  (-> (routing-handler* routes schema opts)
+  (-> (routing-handler* routes
+                        schema
+                        (merge default-options opts))
       m/wrap-error-response))
 
 (ex/derive ::invalid :exoscale.ex/invalid)

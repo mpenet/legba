@@ -99,7 +99,7 @@ There's also an extra argument with options:
   data for the handler - default to `keyword`
   
 * `:query-string-params-key` - where to find the decoded query-string
-  parameters - defaults to `:params`
+  parameters - defaults to `:query-params`
   
 * `:validation-result` - function that controls how to turn
   `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
@@ -107,14 +107,19 @@ There's also an extra argument with options:
   
 * `:extra-routes` - extra routes to be passed to the underlying reitit router
   (using `{:syntax :bracket}`)
-  
+
+* `:path-params-key` - where to locate the routing extracted path parameters -
+  Defaults to reitit `:path-params`
   
 ### Notes
 
-You don't have to do any JSON marshaling, if the content-type is of
-application/json type we will read data as such, same goes for writing. Given
+* You don't have to do any JSON marshaling, if the content-type is of
+*application/json* type we will read data as such, same goes for writing. Given
 the validation library needs the data to be parsed, we preserve this work and
 re-use the parsed content.
+
+* `ring.middleware.params/wrap-params` is applied to the incoming request as to
+allow path params matching for validation.
 
 ### Documentation
 

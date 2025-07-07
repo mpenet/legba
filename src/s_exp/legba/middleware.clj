@@ -8,11 +8,9 @@
   validation from the supplied `schema` for a given `method` and `path`"
   [handler schema method path opts]
   (let [sub-schema (get-in schema [:openapi-schema "paths" path (name method)])]
-    (-> (fn [{:as request :keys [path-params]}]
+    (-> (fn [request]
           (let [request (request/validate
-                         (cond-> request
-                           path-params
-                           (assoc :path-params path-params))
+                         request
                          schema
                          sub-schema
                          opts)
