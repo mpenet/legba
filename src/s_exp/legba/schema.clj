@@ -24,6 +24,7 @@
     (.setFormatAssertionsEnabled true)
     (.setPreloadJsonSchemaRefMaxNestingDepth 40)
     (.setHandleNullableField true)
+    (.setOpenAPI3StyleDiscriminators true)
     (.setPathType PathType/JSON_PATH)))
 
 (defn get-schema ^JsonSchema
