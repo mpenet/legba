@@ -1,5 +1,5 @@
 # Legba 
-<img src="https://github.com/user-attachments/assets/56ce1920-445a-4376-932d-f2115f6e4f5c" width="100" height="100" style="float:left;">
+<img src="https://github.com/user-attachments/assets/56ce1920-445a-4376-932d-f2115f6e4f5c" width="200" height="200" style="float:left;">
 
 
 *Legba* is a library designed for building **fully OpenAPI 3.1 compliant**
