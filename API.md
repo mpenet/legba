@@ -4,8 +4,6 @@
     -  [`handlers`](#s-exp.legba/handlers) - From a map of [method path] -> ring handler returns a map of [method path] -> openapi-wrapped-handler.
     -  [`routing-handler`](#s-exp.legba/routing-handler) - Same as <code>routing-handler*</code> but wraps with <code>s-exp.legba.middleware/wrap-error-response</code> middleware turning exceptions into nicely formatted error responses.
     -  [`routing-handler*`](#s-exp.legba/routing-handler*) - Takes a map of routes as [method path] -> ring-handler, turns them into a map of routes to openapi handlers then creates a handler that will dispatch on the appropriate openapi handler from a potential router match.
--  [`s-exp.legba.content-type`](#s-exp.legba.content-type) 
-    -  [`match-schema-content-type`](#s-exp.legba.content-type/match-schema-content-type) - Matches <code>content-type</code> with <code>schema</code>, return resulting <code>sub-schema</code>.
 -  [`s-exp.legba.json`](#s-exp.legba.json)  - Simple utils to convert to and from jsonNode.
     -  [`-json-node->clj`](#s-exp.legba.json/-json-node->clj)
     -  [`JsonNodeToClj`](#s-exp.legba.json/JsonNodeToClj)
@@ -26,6 +24,9 @@
     -  [`ex->response`](#s-exp.legba.middleware/ex->response)
     -  [`wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) - Wraps handler with error checking middleware that will transform validation Exceptions to equivalent http response, as infered per <code>ex-&gt;response</code>.
     -  [`wrap-validation`](#s-exp.legba.middleware/wrap-validation) - Takes a regular RING handler returns a handler that will apply openapi validation from the supplied <code>schema</code> for a given <code>method</code> and <code>path</code>.
+-  [`s-exp.legba.mime-type`](#s-exp.legba.mime-type) 
+    -  [`match-mime-type?`](#s-exp.legba.mime-type/match-mime-type?)
+    -  [`match-schema-mime-type`](#s-exp.legba.mime-type/match-schema-mime-type) - Matches <code>content-type</code> with <code>schema</code>, return resulting <code>sub-schema</code>.
 -  [`s-exp.legba.request`](#s-exp.legba.request) 
     -  [`cookie-params-schema`](#s-exp.legba.request/cookie-params-schema) - Matches <code>param-type</code> for "cookie".
     -  [`path-params-schema`](#s-exp.legba.request/path-params-schema) - Matches <code>param-type</code> for "path".
@@ -126,23 +127,6 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
   * `:extra-routes` - extra routes to be passed to the underlying reitit router
     (using `{:syntax :bracket}`)
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L59-L95">Source</a></sub></p>
-
------
-# <a name="s-exp.legba.content-type">s-exp.legba.content-type</a>
-
-
-
-
-
-
-## <a name="s-exp.legba.content-type/match-schema-content-type">`match-schema-content-type`</a><a name="s-exp.legba.content-type/match-schema-content-type"></a>
-``` clojure
-
-(match-schema-content-type schema content-type)
-```
-
-Matches `content-type` with `schema`, return resulting `sub-schema`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/content_type.clj#L23-L37">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.json">s-exp.legba.json</a>
@@ -322,6 +306,30 @@ Takes a regular RING handler returns a handler that will apply openapi
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L6-L24">Source</a></sub></p>
 
 -----
+# <a name="s-exp.legba.mime-type">s-exp.legba.mime-type</a>
+
+
+
+
+
+
+## <a name="s-exp.legba.mime-type/match-mime-type?">`match-mime-type?`</a><a name="s-exp.legba.mime-type/match-mime-type?"></a>
+``` clojure
+
+(match-mime-type? mime-type-ptn mime-type)
+```
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/mime_type.clj#L10-L20">Source</a></sub></p>
+
+## <a name="s-exp.legba.mime-type/match-schema-mime-type">`match-schema-mime-type`</a><a name="s-exp.legba.mime-type/match-schema-mime-type"></a>
+``` clojure
+
+(match-schema-mime-type schema content-type)
+```
+
+Matches `content-type` with `schema`, return resulting `sub-schema`
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/mime_type.clj#L22-L30">Source</a></sub></p>
+
+-----
 # <a name="s-exp.legba.request">s-exp.legba.request</a>
 
 
@@ -360,7 +368,7 @@ Matches `param-type` for "query"
 ```
 
 Performs validation of RING request map
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L121-L128">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L120-L127">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-body">`validate-body`</a><a name="s-exp.legba.request/validate-body"></a>
 ``` clojure
@@ -369,7 +377,7 @@ Performs validation of RING request map
 ```
 
 Performs eventual validation of request `:body`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L90-L119">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L90-L118">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-cookie-params">`validate-cookie-params`</a><a name="s-exp.legba.request/validate-cookie-params"></a>
 ``` clojure
