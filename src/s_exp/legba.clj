@@ -104,5 +104,5 @@
                         (merge default-options opts))
       m/wrap-error-response))
 
-(ex/derive ::invalid :exoscale.ex/invalid)
-(ex/derive ::handler-undefined :exoscale.ex/fault)
+(ex/derive :s-exp.legba/invalid :exoscale.ex/invalid)
+(ex/derive :s-exp.legba/handler-undefined :exoscale.ex/fault)

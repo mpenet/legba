@@ -1,8 +1,8 @@
 (ns s-exp.legba.response
   (:require [clojure.string :as str]
             [exoscale.ex :as ex]
-            [s-exp.legba.content-type :as content-type]
             [s-exp.legba.json :as json]
+            [s-exp.legba.mime-type :as mime-type]
             [s-exp.legba.schema :as schema]))
 
 (defn validate-response-body
@@ -17,10 +17,10 @@
                          "application/json")]
     (when-not ct-schema
       (throw (ex-info "Invalid response format for status"
-                      {:type ::invalid-format-for-status
+                      {:type :s-exp.legba.response/invalid-format-for-status
                        :schema sub-schema
                        :message "Invalid response format for status"})))
-    (if-let [body-schema (content-type/match-schema-content-type ct-schema content-type)]
+    (if-let [body-schema (mime-type/match-schema-mime-type ct-schema content-type)]
       (let [json-body (json/json-content-type? content-type)
             ;; if we have a json-body we convert it to jsonnode for validation
             ;; and later returning handler value
@@ -30,7 +30,7 @@
                                             body
                                             opts)]
           (throw (ex-info "Invalid Response Body"
-                          {:type ::invalid-body
+                          {:type :s-exp.legba.response/invalid-body
                            :schema body-schema
                            :errors errors})))
         ;; we converted the body, turn it into a string for the response
@@ -38,7 +38,7 @@
           json-body
           (assoc :body (json/json-node->str body))))
       (throw (ex-info "Invalid response content-type"
-                      {:type ::invalid-content-type
+                      {:type :s-exp.legba.response/invalid-content-type
                        :schema ct-schema
                        :message "Invalid Response Content-Type"})))))
 
@@ -56,7 +56,7 @@
         (throw (ex-info (format "Invalid Response Header: %s:%s"
                                 header-name
                                 header-val)
-                        {:type ::invalid-header
+                        {:type :s-exp.legba.response/invalid-header
                          :schema headers-schema
                          :errors errors})))))
   response)
@@ -72,6 +72,6 @@
 ;; `:s-exp.legba/invalid` and we later dispath on error response multimethod,
 ;; `s-exp.legba.middleware/ex->response`, with the leaf types
 (run! #(ex/derive % :s-exp.legba/invalid)
-      [::invalid-header ::invalid-body
-       ::invalid-format-for-status
-       ::invalid-content-type])
+      [:s-exp.legba.response/invalid-header :s-exp.legba.response/invalid-body
+       :s-exp.legba.response/invalid-format-for-status
+       :s-exp.legba.response/invalid-content-type])

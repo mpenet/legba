@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [deftest is]]
             [s-exp.legba :as l]
             [s-exp.legba.json :as json]
-            [s-exp.legba.json-pointer :as jp]))
+            [s-exp.legba.json-pointer :as jp]
+            [s-exp.legba.mime-type :as mime-type]))
 
 (def item-id (str (random-uuid)))
 
@@ -291,3 +292,14 @@
   (is (json/json-content-type? "charset=utf8;application/json"))
   (is (json/json-content-type? "application/json;charset=utf8;"))
   (is (not (json/json-content-type? "application/jsonp"))))
+
+(deftest mime-type-matching-test
+  (is (mime-type/match-mime-type? "*" "foo/bar"))
+  (is (mime-type/match-mime-type? "*/*" "foo/bar"))
+  (is (mime-type/match-mime-type? "*/bar" "foo/bar"))
+  (is (mime-type/match-mime-type? "foo/*" "foo/bar"))
+  (is (mime-type/match-mime-type? "foo/bar" "foo/bar"))
+  (is (not (mime-type/match-mime-type? "*/bar" "foo/baz")))
+  (is (not (mime-type/match-mime-type? "foo/*" "foox/bar")))
+  (is (not (mime-type/match-mime-type? "foo/bar" "fo/br")))
+  (is (not (mime-type/match-mime-type? "foo/bar" "fooo/barr"))))
