@@ -1,5 +1,6 @@
 (ns s-exp.legba-test
   (:require [clojure.test :refer [deftest is]]
+            [jsonista.core :as jsonista]
             [s-exp.legba :as l]
             [s-exp.legba.json :as json]
             [s-exp.legba.json-pointer :as jp]
@@ -49,29 +50,33 @@
     (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
     (is (string? (:body (h {:request-method :get :uri (str "/item/" item-id)}))))))
 
+(defn read-body-as-edn
+  [response]
+  (update response :body jsonista/read-value))
+
 (deftest requests-test
   (let [h (make-handler {})]
     (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {:type :s-exp.legba.request/invalid-path-parameters,
-             :schema
-             {:itemId
+            {"type" "s-exp.legba.request/invalid-path-parameters",
+             "schema"
+             {"itemId"
               {"schema" {"format" "uuid" "type" "string"},
                "name" "itemId",
                "required" true,
                "description" "ID of the item to retrieve.",
                "in" "path"}},
-             :errors
-             [{:type "format",
-               :path "$",
-               :error
+             "errors"
+             [{"type" "format",
+               "path" "$",
+               "error"
                "does not match the uuid pattern must be a valid RFC 4122 UUID",
-               :message
+               "message"
                "$: does not match the uuid pattern must be a valid RFC 4122 UUID"}]
-             :message "Invalid Path Parameters"}}
-           (h {:request-method :get :uri "/item/ab"})))
+             "message" "Invalid Path Parameters"}}
+           (read-body-as-edn (h {:request-method :get :uri "/item/ab"}))))
 
     (is (string? (:body (h {:request-method :get :uri (str "/item/" item-id)}))))
 
@@ -84,8 +89,8 @@
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {:type :s-exp.legba.request/invalid-content-type,
-             :schema
+            {"type" "s-exp.legba.request/invalid-content-type",
+             "schema"
              {"content"
               {"application/json"
                {"schema"
@@ -103,17 +108,18 @@
                  {"summary" "Example of a new item to create",
                   "value" {"name" "New Item C", "value" 15.75}}}}},
               "required" true},
-             :message "No matching content-type in schema for request"}}
-           (h {:request-method :post
-               :headers {"content-type" "application/boom"}
-               :uri "/items"
-               :body "{\"name\": \"asdf\", \"value\":1}"})))
+             "message" "No matching content-type in schema for request"}}
+           (read-body-as-edn
+            (h {:request-method :post
+                :headers {"content-type" "application/boom"}
+                :uri "/items"
+                :body "{\"name\": \"asdf\", \"value\":1}"}))))
 
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {:type :s-exp.legba.request/invalid-content-type,
-             :schema
+            {"type" "s-exp.legba.request/invalid-content-type",
+             "schema"
              {"content"
               {"application/json"
                {"schema"
@@ -131,25 +137,27 @@
                  {"summary" "Example of a new item to create",
                   "value" {"name" "New Item C", "value" 15.75}}}}},
               "required" true},
-             :message "No matching content-type in schema for request"}}
-           (h {:request-method :post
-               :headers {"content-type" "application/boom"}
-               :uri "/items"
-               :body "{\"name\": \"asdf\", \"value\":1}"})))
+             "message" "No matching content-type in schema for request"}}
+           (read-body-as-edn
+            (h {:request-method :post
+                :headers {"content-type" "application/boom"}
+                :uri "/items"
+                :body "{\"name\": \"asdf\", \"value\":1}"}))))
 
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {:type :s-exp.legba.request/missing-query-parameter,
-             :schema
+            {"type" "s-exp.legba.request/missing-query-parameter",
+             "schema"
              {"schema" {"type" "string"},
               "name" "term",
               "required" true,
               "description" "Search term",
               "in" "query"},
-             :message "Missing Required Query Parameter"}}
-           (h {:request-method :get
-               :uri "/search"})))
+             "message" "Missing Required Query Parameter"}}
+           (read-body-as-edn
+            (h {:request-method :get
+                :uri "/search"}))))
     (is (= 200 (:status (h {:request-method :get
                             :uri "/search"
                             :query-string "term=yolo"}))))))
@@ -157,13 +165,14 @@
 (deftest response-test
   (let [h (make-handler {:post-items-response {}})
         {:as _r :keys [status body]}
-        (h {:request-method :post
-            :headers {"content-type" "application/json"}
-            :uri "/items"
-            :body "{\"name\": \"asdf\", \"value\":1}"})]
+        (read-body-as-edn
+         (h {:request-method :post
+             :headers {"content-type" "application/json"}
+             :uri "/items"
+             :body "{\"name\": \"asdf\", \"value\":1}"}))]
     (is (= status 400))
-    (is (= {:type :s-exp.legba.response/invalid-format-for-status,
-            :schema
+    (is (= {"type" "s-exp.legba.response/invalid-format-for-status",
+            "schema"
             {"responses"
              {"201"
               {"content"
@@ -195,42 +204,44 @@
                   "value" {"name" "New Item C", "value" 15.75}}}}},
               "required" true},
              "description" "Adds a new item to the system."},
-            :message "Invalid response format for status"}
+            "message" "Invalid response format for status"}
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
                                                :status 201}})
         {:as _r :keys [status body]}
-        (h {:request-method :post
-            :headers {"content-type" "application/json"}
-            :uri "/items"
-            :body "{\"name\": \"asdf\", \"value\":1}"})]
+        (read-body-as-edn
+         (h {:request-method :post
+             :headers {"content-type" "application/json"}
+             :uri "/items"
+             :body "{\"name\": \"asdf\", \"value\":1}"}))]
     (is (= status 400))
-    (is (= {:message "Invalid Response Body",
-            :schema
+    (is (= {"message" "Invalid Response Body",
+            "schema"
             {"type" "object"
              "properties"
              {"id" {"type" "string"
                     "format" "uuid"},
               "name" {"type" "string"},
               "value" {"type" "number"}}},
-            :type :s-exp.legba.response/invalid-body,
-            :errors [{:type "type",
-                      :path "$",
-                      :error "null found, object expected",
-                      :message "$: null found, object expected"}]}
+            "type" "s-exp.legba.response/invalid-body",
+            "errors" [{"type" "type",
+                       "path" "$",
+                       "error" "null found, object expected",
+                       "message" "$: null found, object expected"}]}
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/xx"}
                                                :status 201}})
         {:as _r :keys [status body]}
-        (h {:request-method :post
-            :headers {"content-type" "application/json"}
-            :uri "/items"
-            :body "{\"name\": \"asdf\", \"value\":1}"})]
+        (read-body-as-edn
+         (h {:request-method :post
+             :headers {"content-type" "application/json"}
+             :uri "/items"
+             :body "{\"name\": \"asdf\", \"value\":1}"}))]
     (is (= 400 status))
-    (is (= {:type :s-exp.legba.response/invalid-content-type,
-            :schema
+    (is (= {"type" "s-exp.legba.response/invalid-content-type",
+            "schema"
             {"content"
              {"application/json"
               {"schema"
@@ -241,7 +252,7 @@
                  "name" {"type" "string"},
                  "value" {"type" "number"}}}}},
              "description" "Item created successfully."},
-            :message "Invalid response content-type"} body))))
+            "message" "Invalid response content-type"} body))))
 
 (deftest error-output-test
   (is true))
