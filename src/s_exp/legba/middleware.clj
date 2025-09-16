@@ -1,5 +1,6 @@
 (ns s-exp.legba.middleware
   (:require [exoscale.ex :as ex]
+            [jsonista.core :as json]
             [s-exp.legba.request :as request]
             [s-exp.legba.response :as response]))
 
@@ -23,6 +24,7 @@
                    :schema schema
                    :sub-schema sub-schema))))
 
+(def ex->response nil)
 (defmulti ex->response
   #(some-> % ex/ex-type)
   :hierarchy ex/hierarchy)
@@ -33,16 +35,20 @@
   (let [data (ex-data e)]
     {:status 400
      :content-type "application/json"
-     :body (assoc data :message (ex-message e))}))
+     :body (json/write-value-as-string (assoc data :message (ex-message e)))}))
+
+(defn wrap-error-response-fn
+  [handler req]
+  (ex/try+
+    (handler req)
+    #_{:clj-kondo/ignore [:unresolved-symbol]}
+    (catch :s-exp.legba/invalid _
+      #_{:clj-kondo/ignore [:unresolved-symbol]}
+      (ex->response &ex))))
 
 (defn wrap-error-response
   "Wraps handler with error checking middleware that will transform validation
   Exceptions to equivalent http response, as infered per `ex->response`"
   [handler]
   (fn [req]
-    (ex/try+
-      (handler req)
-      #_{:clj-kondo/ignore [:unresolved-symbol]}
-      (catch :exoscale.ex/invalid _
-        #_{:clj-kondo/ignore [:unresolved-symbol]}
-        (ex->response &ex)))))
+    (wrap-error-response-fn handler req)))
