@@ -99,7 +99,9 @@
           ;; conten-type is json we load into jsonnode and pass it along to
           ;; validator and then later turn that jsonnode into a clj thing
           (let [json-body (json/json-content-type? content-type)
-                body (cond-> body json-body json/str->json-node)]
+                body (if json-body
+                       (-> body slurp json/str->json-node)
+                       body)]
             (when-let [errors (schema/validate! schema
                                                 body-schema
                                                 body

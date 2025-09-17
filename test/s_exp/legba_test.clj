@@ -1,5 +1,6 @@
 (ns s-exp.legba-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.java.io :as io]
+            [clojure.test :refer [deftest is]]
             [jsonista.core :as jsonista]
             [s-exp.legba :as l]
             [s-exp.legba.json :as json]
@@ -7,6 +8,10 @@
             [s-exp.legba.mime-type :as mime-type]))
 
 (def item-id (str (random-uuid)))
+
+(defn input-stream
+  [s]
+  (io/input-stream (.getBytes s)))
 
 (defn make-handler
   [{:as _response-mocks
@@ -84,7 +89,7 @@
            (:status (h {:request-method :post
                         :headers {"content-type" "application/json"}
                         :uri "/items"
-                        :body "{\"name\": \"asdf\", \"value\":1}"}))))
+                        :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))))
 
     (is (= {:status 400,
             :content-type "application/json",
@@ -113,7 +118,7 @@
             (h {:request-method :post
                 :headers {"content-type" "application/boom"}
                 :uri "/items"
-                :body "{\"name\": \"asdf\", \"value\":1}"}))))
+                :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))))
 
     (is (= {:status 400,
             :content-type "application/json",
@@ -142,7 +147,7 @@
             (h {:request-method :post
                 :headers {"content-type" "application/boom"}
                 :uri "/items"
-                :body "{\"name\": \"asdf\", \"value\":1}"}))))
+                :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))))
 
     (is (= {:status 400,
             :content-type "application/json",
@@ -169,7 +174,7 @@
          (h {:request-method :post
              :headers {"content-type" "application/json"}
              :uri "/items"
-             :body "{\"name\": \"asdf\", \"value\":1}"}))]
+             :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= status 400))
     (is (= {"type" "s-exp.legba.response/invalid-format-for-status",
             "schema"
@@ -214,7 +219,7 @@
          (h {:request-method :post
              :headers {"content-type" "application/json"}
              :uri "/items"
-             :body "{\"name\": \"asdf\", \"value\":1}"}))]
+             :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= status 400))
     (is (= {"message" "Invalid Response Body",
             "schema"
@@ -238,7 +243,7 @@
          (h {:request-method :post
              :headers {"content-type" "application/json"}
              :uri "/items"
-             :body "{\"name\": \"asdf\", \"value\":1}"}))]
+             :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= 400 status))
     (is (= {"type" "s-exp.legba.response/invalid-content-type",
             "schema"
