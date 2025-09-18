@@ -65,8 +65,7 @@
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {"type" "s-exp.legba.request/invalid-path-parameters",
-             "schema"
+            {"schema"
              {"itemId"
               {"schema" {"format" "uuid" "type" "string"},
                "name" "itemId",
@@ -94,8 +93,7 @@
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {"type" "s-exp.legba.request/invalid-content-type",
-             "schema"
+            {"schema"
              {"content"
               {"application/json"
                {"schema"
@@ -123,8 +121,7 @@
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {"type" "s-exp.legba.request/invalid-content-type",
-             "schema"
+            {"schema"
              {"content"
               {"application/json"
                {"schema"
@@ -152,8 +149,7 @@
     (is (= {:status 400,
             :content-type "application/json",
             :body
-            {"type" "s-exp.legba.request/missing-query-parameter",
-             "schema"
+            {"schema"
              {"schema" {"type" "string"},
               "name" "term",
               "required" true,
@@ -176,8 +172,7 @@
              :uri "/items"
              :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= status 400))
-    (is (= {"type" "s-exp.legba.response/invalid-format-for-status",
-            "schema"
+    (is (= {"schema"
             {"responses"
              {"201"
               {"content"
@@ -229,7 +224,6 @@
                     "format" "uuid"},
               "name" {"type" "string"},
               "value" {"type" "number"}}},
-            "type" "s-exp.legba.response/invalid-body",
             "errors" [{"type" "type",
                        "path" "$",
                        "error" "null found, object expected",
@@ -245,8 +239,7 @@
              :uri "/items"
              :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= 400 status))
-    (is (= {"type" "s-exp.legba.response/invalid-content-type",
-            "schema"
+    (is (= {"schema"
             {"content"
              {"application/json"
               {"schema"

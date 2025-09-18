@@ -99,10 +99,11 @@
   `s-exp.legba.middleware/wrap-error-response` middleware turning exceptions
   into nicely formatted error responses"
   [routes schema & {:as opts}]
-  (-> (routing-handler* routes
-                        schema
-                        (merge default-options opts))
-      m/wrap-error-response))
+  (let [opts (merge default-options opts)]
+    (-> (routing-handler* routes
+                          schema
+                          opts)
+        (m/wrap-error-response opts))))
 
 (ex/derive :s-exp.legba/invalid :exoscale.ex/invalid)
 (ex/derive :s-exp.legba/handler-undefined :exoscale.ex/fault)
