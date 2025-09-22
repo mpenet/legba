@@ -1,39 +1,103 @@
 (ns s-exp.legba.router
-  (:require [reitit.core :as r]))
+  (:require [clojure.string :as str]))
+
+;; Adapted from https://github.com/tonsky/clj-simple-router/tree/main
+;; Copyright 2023 Nikita Prokopov - Licensed under MIT License.
+
+;; This is basically simpler router with modified behavior so that instead of
+;; matching on * it matches on named parameters
+
+(defn- compare-masks
+  [as bs]
+  (let [a (first as)
+        b (first bs)]
+    (cond
+      (= nil as bs) 0
+      (= nil as) -1
+      (= nil bs) 1
+      (= "*" a b) (recur (next as) (next bs))
+      (= "*" a) 1
+      (= "*" b) -1
+      (and (symbol? a) (symbol? b))
+      (recur (next as) (next bs))
+      (symbol? a) 1
+      (symbol? b) -1
+      :else (recur (next as) (next bs)))))
+
+(defn- pattern-mask
+  [m]
+  (some-> (re-matches #"^\{(\S+)}$" m)
+          second
+          symbol))
+
+(defn- split-route-eduction
+  [path]
+  (eduction (keep #(when-not (str/blank? %)
+                     (str/trim %)))
+            (str/split path #"/+")))
+
+(defn- split-req
+  [{:as _request :keys [request-method uri]}]
+  (into [request-method] (split-route-eduction uri)))
+
+(defn- split-route
+  [[method path :as _route]]
+  (into [method]
+        (map (fn [mask]
+               (or (pattern-mask mask)
+                   mask)))
+        (split-route-eduction path)))
+
+(defn- matches?
+  [mask path]
+  (loop [mask mask
+         path path
+         params {}]
+    (let [m (first mask)
+          p (first path)]
+      (cond
+        (= "*" m) (if path
+                    (assoc params :* (str/join "/" path))
+                    params)
+        (= nil mask path) params
+        (= nil mask) nil
+        (= nil path) nil
+        (symbol? m)
+        (recur (next mask) (next path) (assoc params (keyword m) p))
+        (= m p)
+        (recur (next mask) (next path) params)))))
+
+(defn- match*
+  [matcher path]
+  (reduce (fn [_ [mask v]]
+            (when-some [params (matches? mask path)]
+              (reduced [v params])))
+          nil
+          matcher))
+
+(defn make-matcher
+  "Given set of routes, builds matcher structure. See `router`"
+  [routes]
+  (->> routes
+       (map (fn [[mask v]] [(split-route mask) v]))
+       (sort-by first compare-masks)))
+
+(defn match
+  "Given `matcher` attempts to match against ring request, return match (tuple of
+  `data` & `path-params`)"
+  [matcher request]
+  (match* matcher (split-req request)))
 
 (defn router
-  "Creates a reitit router that matches by method/path for a given `schema`.
+  "Creates a router that matches by method/path for a given `schema`.
   `extra-routes` can be passed to add non openapi centric routes to the routing
   table"
-  [{:as _schema :keys [openapi-schema]} openapi-handlers & {:as _opts :keys [extra-routes]}]
-  (-> (reduce (fn [routers-m [method & route]]
-                (update routers-m
-                        method
-                        (fnil conj [])
-                        (vec route)))
-              {}
-              (for [[path methods] (get openapi-schema "paths")
-                    [method _parameters] methods
-                    :let [method (keyword method)
-                          openapi-handler (get openapi-handlers [method path])]]
-                [(keyword method)
-                 path
-                 {:path path
-                  :method method
-                  :handler
-                  ((promise) openapi-handler)}]))
-
-      (update-vals (fn [routes]
-                     (r/router (merge routes extra-routes)
-                               {:syntax :bracket})))))
-
-(defn match-route
-  "Matches `method` `path` on `router`"
-  [router method path {:as _opts :keys [path-params-key]}]
-  (when-let [r (get router method)]
-    (when-let [{:as _match :keys [data path-params]} (r/match-by-path r path)]
-      (cond-> data
-        (seq path-params)
-        (assoc path-params-key (update-keys path-params keyword))
-        :then
-        (update :handler deref)))))
+  [{:as _schema :keys [openapi-schema]} openapi-handlers
+   & {:as _opts :keys [extra-routes]
+      :or {extra-routes {}}}]
+  (make-matcher
+   (into extra-routes
+         (for [[path methods] (get openapi-schema "paths")
+               [method _parameters] methods
+               :let [k [(keyword method) path]]]
+           [k (get openapi-handlers k)]))))

@@ -8,7 +8,6 @@
     [:distribution "repo"]]]]
 
  :deps {org.clojure/clojure {:mvn/version "1.12.1"}
-        metosin/reitit-core {:mvn/version "0.9.1"}
         metosin/jsonista {:mvn/version "0.3.13"}
         exoscale/ex {:mvn/version "0.4.1"}
         com.networknt/json-schema-validator {:mvn/version "1.5.8"}

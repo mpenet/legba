@@ -64,8 +64,8 @@ You can either:
 
 * Or use `s-exp.legba/routing-handler`: taking an OpenAPI file and a map of
   `[method path]` -> `handler` that matches the routes of the OpenAPI schema,
-  returns a single handler that will manage routing via reitit and perform
-  validation and marshaling of the data according to the schema (via
+  returns a single handler that will manage routing and perform validation and
+  marshaling of the data according to the schema (via
   networknt/json-schema-validator). This handler can simply be plugged to a RING
   server adapter and you're good to go.
   
@@ -115,11 +115,11 @@ There's also an extra argument with options:
   `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
   to `s-exp.legba.schema/validation-result`
   
-* `:extra-routes` - extra routes to be passed to the underlying reitit router
-  (using `{:syntax :bracket}`)
+* `:extra-routes` - extra routes to be passed to the underlying router
+
 
 * `:path-params-key` - where to locate the routing extracted path parameters -
-  Defaults to reitit `:path-params`
+  Defaults to `:path-params`
   
 ### Notes
 
