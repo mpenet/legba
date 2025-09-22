@@ -76,9 +76,9 @@
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
     to `s-exp.legba.schema/validation-result`
 
-  * `:extra-routes` - extra routes to be passed to the underlying reitit router
-    (using `{:syntax :bracket}`)"
-  [routes schema & {:as opts :keys [path-params-key]}]
+  * `:extra-routes` - extra routes to be passed to the underlying router"
+  [routes schema & {:as opts
+                    :keys [path-params-key]}]
   (let [{:as opts :keys [not-found-response]}
         (merge default-options opts)
         schema (schema/load-schema schema)
@@ -87,11 +87,10 @@
         router (router/router schema handlers opts)]
     (fn [{:as request}]
       (if-let [[handler path-params] (router/match router request)]
-        (do
-          (cond-> request
-            path-params
-            (assoc path-params-key path-params)
-            :then handler))
+        (cond-> request
+          path-params
+          (assoc path-params-key path-params)
+          :then handler)
         not-found-response))))
 
 (defn routing-handler

@@ -2,13 +2,13 @@
   (:require [clojure.string :as str]))
 
 ;; Adapted from https://github.com/tonsky/clj-simple-router/tree/main
-;; Copyright 2023 Nikita Prokopov
-;; Licensed under MIT License.
+;; Copyright 2023 Nikita Prokopov - Licensed under MIT License.
 
 ;; This is basically simpler router with modified behavior so that instead of
 ;; matching on * it matches on named parameters
 
-(defn- compare-masks [as bs]
+(defn- compare-masks
+  [as bs]
   (let [a (first as)
         b (first bs)]
     (cond
@@ -24,13 +24,13 @@
       (symbol? b) -1
       :else (recur (next as) (next bs)))))
 
-(defn pattern-mask
+(defn- pattern-mask
   [m]
   (some-> (re-matches #"^\{(\S+)}$" m)
           second
           symbol))
 
-(defn split-route-eduction
+(defn- split-route-eduction
   [path]
   (eduction (keep #(when-not (str/blank? %)
                      (str/trim %)))
@@ -40,21 +40,16 @@
   [{:as _request :keys [request-method uri]}]
   (into [request-method] (split-route-eduction uri)))
 
-(defn- split-route [[method path :as _route]]
+(defn- split-route
+  [[method path :as _route]]
   (into [method]
         (map (fn [mask]
                (or (pattern-mask mask)
                    mask)))
         (split-route-eduction path)))
 
-(defn make-matcher
-  "Given set of routes, builds matcher structure. See `router`"
-  [routes]
-  (->> routes
-       (map (fn [[mask v]] [(split-route mask) v]))
-       (sort-by first compare-masks)))
-
-(defn- matches? [mask path]
+(defn- matches?
+  [mask path]
   (loop [mask mask
          path path
          params {}]
@@ -72,16 +67,26 @@
         (= m p)
         (recur (next mask) (next path) params)))))
 
-(defn- match-impl [matcher path]
+(defn- match*
+  [matcher path]
   (reduce (fn [_ [mask v]]
             (when-some [params (matches? mask path)]
               (reduced [v params])))
           nil
           matcher))
 
+(defn make-matcher
+  "Given set of routes, builds matcher structure. See `router`"
+  [routes]
+  (->> routes
+       (map (fn [[mask v]] [(split-route mask) v]))
+       (sort-by first compare-masks)))
+
 (defn match
+  "Given `matcher` attempts to match against ring request, return match (tuple of
+  `data` & `path-params`)"
   [matcher request]
-  (match-impl matcher (split-req request)))
+  (match* matcher (split-req request)))
 
 (defn router
   "Creates a router that matches by method/path for a given `schema`.

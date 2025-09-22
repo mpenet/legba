@@ -23,6 +23,7 @@
 -  [`s-exp.legba.middleware`](#s-exp.legba.middleware) 
     -  [`ex->response`](#s-exp.legba.middleware/ex->response)
     -  [`wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) - Wraps handler with error checking middleware that will transform validation Exceptions to equivalent http response, as infered per <code>ex-&gt;response</code>.
+    -  [`wrap-error-response-fn`](#s-exp.legba.middleware/wrap-error-response-fn)
     -  [`wrap-validation`](#s-exp.legba.middleware/wrap-validation) - Takes a regular RING handler returns a handler that will apply openapi validation from the supplied <code>schema</code> for a given <code>method</code> and <code>path</code>.
 -  [`s-exp.legba.mime-type`](#s-exp.legba.mime-type) 
     -  [`match-mime-type?`](#s-exp.legba.mime-type/match-mime-type?)
@@ -41,8 +42,9 @@
     -  [`validate-response-body`](#s-exp.legba.response/validate-response-body) - Performs eventual validation of response body.
     -  [`validate-response-headers`](#s-exp.legba.response/validate-response-headers) - Performs validation of response headers.
 -  [`s-exp.legba.router`](#s-exp.legba.router) 
-    -  [`match-route`](#s-exp.legba.router/match-route) - Matches <code>method</code> <code>path</code> on <code>router</code>.
-    -  [`router`](#s-exp.legba.router/router) - Creates a reitit router that matches by method/path for a given <code>schema</code>.
+    -  [`make-matcher`](#s-exp.legba.router/make-matcher) - Given set of routes, builds matcher structure.
+    -  [`match`](#s-exp.legba.router/match) - Given <code>matcher</code> attempts to match against ring request, return match (tuple of <code>data</code> & <code>path-params</code>).
+    -  [`router`](#s-exp.legba.router/router) - Creates a router that matches by method/path for a given <code>schema</code>.
 -  [`s-exp.legba.schema`](#s-exp.legba.schema) 
     -  [`get-schema`](#s-exp.legba.schema/get-schema) - Returns json-schema from json-schema-factory at <code>schema-uri</code>/<code>json-pointer</code>.
     -  [`load-schema`](#s-exp.legba.schema/load-schema) - Loads JSON or YAML schema from <code>schema-uri</code> and returns map (of :openapi-schema, :schema-uri, :json-schema-factory) that contains all the necessary information to perform <code>validate!</code> calls later (minus a JSON pointer).
@@ -97,7 +99,7 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 Same as [`routing-handler*`](#s-exp.legba/routing-handler*) but wraps with
   [`s-exp.legba.middleware/wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) middleware turning exceptions
   into nicely formatted error responses
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L97-L105">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L96-L105">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler*">`routing-handler*`</a><a name="s-exp.legba/routing-handler*"></a>
 ``` clojure
@@ -124,9 +126,8 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
     to [`s-exp.legba.schema/validation-result`](#s-exp.legba.schema/validation-result)
 
-  * `:extra-routes` - extra routes to be passed to the underlying reitit router
-    (using `{:syntax :bracket}`)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L59-L95">Source</a></sub></p>
+  * `:extra-routes` - extra routes to be passed to the underlying router
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L59-L94">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.json">s-exp.legba.json</a>
@@ -283,17 +284,24 @@ Resolves a JSON Pointer against a given JSON data structure.
 
 
 
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L26-L28">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L27-L29">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-error-response">`wrap-error-response`</a><a name="s-exp.legba.middleware/wrap-error-response"></a>
 ``` clojure
 
-(wrap-error-response handler)
+(wrap-error-response handler opts)
 ```
 
 Wraps handler with error checking middleware that will transform validation
   Exceptions to equivalent http response, as infered per [`ex->response`](#s-exp.legba.middleware/ex->response)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L38-L48">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L58-L63">Source</a></sub></p>
+
+## <a name="s-exp.legba.middleware/wrap-error-response-fn">`wrap-error-response-fn`</a><a name="s-exp.legba.middleware/wrap-error-response-fn"></a>
+``` clojure
+
+(wrap-error-response-fn handler req opts)
+```
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L49-L56">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-validation">`wrap-validation`</a><a name="s-exp.legba.middleware/wrap-validation"></a>
 ``` clojure
@@ -303,7 +311,7 @@ Wraps handler with error checking middleware that will transform validation
 
 Takes a regular RING handler returns a handler that will apply openapi
   validation from the supplied `schema` for a given `method` and `path`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L6-L24">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L7-L25">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.mime-type">s-exp.legba.mime-type</a>
@@ -368,7 +376,7 @@ Matches `param-type` for "query"
 ```
 
 Performs validation of RING request map
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L120-L127">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L122-L129">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-body">`validate-body`</a><a name="s-exp.legba.request/validate-body"></a>
 ``` clojure
@@ -377,7 +385,7 @@ Performs validation of RING request map
 ```
 
 Performs eventual validation of request `:body`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L90-L118">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L90-L120">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-cookie-params">`validate-cookie-params`</a><a name="s-exp.legba.request/validate-cookie-params"></a>
 ``` clojure
@@ -449,25 +457,39 @@ Performs validation of response headers
 
 
 
-## <a name="s-exp.legba.router/match-route">`match-route`</a><a name="s-exp.legba.router/match-route"></a>
+## <a name="s-exp.legba.router/make-matcher">`make-matcher`</a><a name="s-exp.legba.router/make-matcher"></a>
 ``` clojure
 
-(match-route router method path {:as _opts, :keys [path-params-key]})
+(make-matcher routes)
 ```
 
-Matches `method` `path` on [`router`](#s-exp.legba.router/router)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L30-L39">Source</a></sub></p>
+Given set of routes, builds matcher structure. See [`router`](#s-exp.legba.router/router)
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L78-L83">Source</a></sub></p>
+
+## <a name="s-exp.legba.router/match">`match`</a><a name="s-exp.legba.router/match"></a>
+``` clojure
+
+(match matcher request)
+```
+
+Given `matcher` attempts to match against ring request, return match (tuple of
+  `data` & `path-params`)
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L85-L89">Source</a></sub></p>
 
 ## <a name="s-exp.legba.router/router">`router`</a><a name="s-exp.legba.router/router"></a>
 ``` clojure
 
-(router {:as _schema, :keys [openapi-schema]} openapi-handlers & {:as _opts, :keys [extra-routes]})
+(router
+ {:as _schema, :keys [openapi-schema]}
+ openapi-handlers
+ &
+ {:as _opts, :keys [extra-routes], :or {extra-routes {}}})
 ```
 
-Creates a reitit router that matches by method/path for a given `schema`.
+Creates a router that matches by method/path for a given `schema`.
   `extra-routes` can be passed to add non openapi centric routes to the routing
   table
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L4-L28">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L91-L103">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.schema">s-exp.legba.schema</a>
