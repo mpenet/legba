@@ -85,13 +85,13 @@
         handlers (handlers routes schema opts)
         _ (ensure-handler-coverage! handlers schema)
         router (router/router schema handlers opts)]
-    (fn [{:as request :keys [request-method uri]}]
-      (if-let [{:as _match :keys [handler path-params]}
-               (router/match-route router request-method uri opts)]
-        (cond-> request
-          path-params
-          (assoc path-params-key path-params)
-          :then handler)
+    (fn [{:as request}]
+      (if-let [[handler path-params] (router/match router request)]
+        (do
+          (cond-> request
+            path-params
+            (assoc path-params-key path-params)
+            :then handler))
         not-found-response))))
 
 (defn routing-handler
