@@ -11,19 +11,14 @@
 services in Clojure.
 
 Legba streamlines the creation of OpenAPI based servers by emphasizing the
-**OpenAPI schema file as the foundation of your service definition**. Unlike other
-libraries that generate the schema from routes & validation defined in a
-separate DSL, Legba takes the opposite approach: **it uses your OpenAPI schema to
+**OpenAPI schema file as the foundation of your service definition**. Unlike
+other libraries that generate the schema from routes & validation defined in a
+separate DSL, Legba takes a different approach: **it uses your OpenAPI schema to
 create the necessary routes and wraps your supplied handlers with OpenAPI
 validation**.
 
 Legba ensures that the final OpenAPI file exposed to your users remains
 **unrestricted, reviewable, and editable**.
-
-But feel free to leverage libraries like [pact](https://github.com/mpenet/pact)
-to generate portions of your schemas, that's perfectly fine, and the resulting
-file would certainly be usable with legba, but this is not a pre-requisite for
-using *legba*.
 
 ## Legba goals
 
