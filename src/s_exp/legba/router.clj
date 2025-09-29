@@ -1,11 +1,18 @@
 (ns s-exp.legba.router
+  "Router utilities for HTTP request handling using matching on path/method.
+
+  Provides functions for building and matching routes, adapted from
+  clj-simple-router but modified to match on named path parameters
+  (e.g. '/foo/{bar}') and HTTP methods instead of simple wildcards.
+
+  Exposes:
+  - make-matcher: Builds a matcher from a set of routes.
+  - match: Attempts to match a matcher against a Ring-style request.
+  - router: Builds a matcher from an OpenAPI schema and optional extra routes."
   (:require [clojure.string :as str]))
 
 ;; Adapted from https://github.com/tonsky/clj-simple-router/tree/main
 ;; Copyright 2023 Nikita Prokopov - Licensed under MIT License.
-
-;; This is basically simpler router with modified behavior so that instead of
-;; matching on * it matches on named parameters
 
 (defn- compare-masks
   [as bs]
