@@ -126,6 +126,31 @@ re-use the parsed content.
 * `ring.middleware.params/wrap-params` is applied to the incoming request as to
 allow path params matching for validation.
 
+
+### Standalone Json-Schema validation
+
+Using s-exp.legba.json-schema you can also perform standalone json-schema validation.
+
+#### Example
+
+Define a simple JSON schema file `json-schema.json`
+
+```json
+  {"type" "object"
+   "properties" {"name" {"type" "string"}
+                 "age"  {"type" "integer"}}
+   "required" ["name" "age"]
+   "additionalProperties" false}
+```
+
+```clojure
+(require '[s-exp.legba.json-schema :as json-schema]
+
+;; Validate the data
+(-> (json-schema/schema "classpath://json-schema.json")
+    (json-schema/validate!  "{\"name\":\"Alice\",\"age\":30}"))
+```
+
 ### Documentation
 
 [API docs](API.md)

@@ -2,7 +2,7 @@
   (:require [exoscale.ex :as ex]
             [s-exp.legba.json :as json]
             [s-exp.legba.mime-type :as mime-type]
-            [s-exp.legba.schema :as schema]))
+            [s-exp.legba.openapi-schema :as schema]))
 
 (defn- match->params-schema-fn
   "Returns a fn that will match schema \"parameters\" by `param-type`"

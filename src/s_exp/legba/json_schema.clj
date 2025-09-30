@@ -2,7 +2,8 @@
   "JSON Schema validation utilities.
    Provides helpers to load, cache, and validate JSON Schemas"
   (:import (com.fasterxml.jackson.databind JsonNode)
-           (com.networknt.schema JsonSchemaFactory
+           (com.networknt.schema JsonSchema
+                                 JsonSchemaFactory
                                  JsonSchemaFactory$Builder
                                  SchemaValidatorsConfig
                                  InputFormat
@@ -12,6 +13,8 @@
                                  ValidationMessage
                                  SpecVersion$VersionFlag
                                  PathType)))
+
+(set! *warn-on-reflection* true)
 
 (def schema-validator-config
   "Default reusable `SchemaValidatorsConfig` instance.
@@ -102,7 +105,7 @@
   Example:
     (validate! myschema \"{\"foo\":42}\")
     (validate! myschema my-jackson-json-node)"
-  [schema val
+  [^JsonSchema schema val
    & {:as _opts
       :keys [validation-result]
       :or {validation-result validation-result}}]

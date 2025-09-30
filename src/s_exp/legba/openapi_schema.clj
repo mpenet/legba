@@ -1,4 +1,4 @@
-(ns s-exp.legba.schema
+(ns s-exp.legba.openapi-schema
   (:require [s-exp.legba.json :as json]
             [s-exp.legba.json-pointer :as json-pointer])
   (:import (com.fasterxml.jackson.databind JsonNode)

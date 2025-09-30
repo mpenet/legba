@@ -3,8 +3,8 @@
             [exoscale.ex :as ex]
             [ring.middleware.params :as ring-params]
             [s-exp.legba.middleware :as m]
-            [s-exp.legba.router :as router]
-            [s-exp.legba.schema :as schema]))
+            [s-exp.legba.openapi-schema :as schema]
+            [s-exp.legba.router :as router]))
 
 (def default-options
   "Default options used by openapi-handler"
@@ -40,7 +40,7 @@
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
-    to `s-exp.legba.schema/validation-result`"
+    to `s-exp.legba.openapi-schema/validation-result`"
   [routes schema & {:as opts}]
   (let [opts (merge default-options opts)]
     (reduce (-> (fn [m [[method path :as coords] handler]]
@@ -74,7 +74,7 @@
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
-    to `s-exp.legba.schema/validation-result`
+    to `s-exp.legba.openapi-schema/validation-result`
 
   * `:extra-routes` - extra routes to be passed to the underlying router"
   [routes schema & {:as opts
