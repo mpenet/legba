@@ -20,6 +20,11 @@
     -  [`parse-json-pointer`](#s-exp.legba.json-pointer/parse-json-pointer) - Parses a JSON Pointer string into a sequence of reference tokens.
     -  [`pointer-append`](#s-exp.legba.json-pointer/pointer-append) - Adds value to existing json-pointer and returns a new one.
     -  [`query`](#s-exp.legba.json-pointer/query) - Resolves a JSON Pointer against a given JSON data structure.
+-  [`s-exp.legba.json-schema`](#s-exp.legba.json-schema)  - JSON Schema validation utilities.
+    -  [`schema`](#s-exp.legba.json-schema/schema) - Loads and builds a JSON Schema validator instance from a URI or file path.
+    -  [`schema-validator-config`](#s-exp.legba.json-schema/schema-validator-config) - Default reusable <code>SchemaValidatorsConfig</code> instance.
+    -  [`validate!`](#s-exp.legba.json-schema/validate!) - Validates a value against a previously loaded or constructed schema.
+    -  [`validation-result`](#s-exp.legba.json-schema/validation-result) - Extracts validation errors from a ValidationResult object.
 -  [`s-exp.legba.middleware`](#s-exp.legba.middleware) 
     -  [`ex->response`](#s-exp.legba.middleware/ex->response)
     -  [`wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) - Wraps handler with error checking middleware that will transform validation Exceptions to equivalent http response, as infered per <code>ex-&gt;response</code>.
@@ -41,7 +46,7 @@
     -  [`validate`](#s-exp.legba.response/validate) - Performs validation of RING response map.
     -  [`validate-response-body`](#s-exp.legba.response/validate-response-body) - Performs eventual validation of response body.
     -  [`validate-response-headers`](#s-exp.legba.response/validate-response-headers) - Performs validation of response headers.
--  [`s-exp.legba.router`](#s-exp.legba.router) 
+-  [`s-exp.legba.router`](#s-exp.legba.router)  - Router utilities for HTTP request handling using matching on path/method.
     -  [`make-matcher`](#s-exp.legba.router/make-matcher) - Given set of routes, builds matcher structure.
     -  [`match`](#s-exp.legba.router/match) - Given <code>matcher</code> attempts to match against ring request, return match (tuple of <code>data</code> & <code>path-params</code>).
     -  [`router`](#s-exp.legba.router/router) - Creates a router that matches by method/path for a given <code>schema</code>.
@@ -273,6 +278,105 @@ Resolves a JSON Pointer against a given JSON data structure.
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_pointer.clj#L37-L51">Source</a></sub></p>
 
 -----
+# <a name="s-exp.legba.json-schema">s-exp.legba.json-schema</a>
+
+
+JSON Schema validation utilities.
+   Provides helpers to load, cache, and validate JSON Schemas
+
+
+
+
+## <a name="s-exp.legba.json-schema/schema">`schema`</a><a name="s-exp.legba.json-schema/schema"></a>
+``` clojure
+
+(schema
+ schema-uri
+ &
+ {:as _opts, :keys [schema-validator-config], :or {schema-validator-config schema-validator-config}})
+```
+
+Loads and builds a JSON Schema validator instance from a URI or file path.
+
+  Arguments:
+    - `schema-uri` (string): Location of the JSON Schema (file:/..., http:/...,
+  classpath:/..., etc)
+
+    - `:schema-validator-config` (optional): Custom
+  `SchemaValidatorsConfig` (default: this namespace's
+  [`schema-validator-config`](#s-exp.legba.json-schema/schema-validator-config)).
+
+  Returns:
+
+    An instance of the JSON Schema validator (`com.networknt.schema.JsonSchema`).
+    This object can be reused to validate multiple values or payloads.
+
+  Example:
+    (schema "classpath:///tmp/foo.schema.json")
+    (schema "file:///data/schema/bar.json")
+    (schema "https://schemas.org/example.schema.json")
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L35-L64">Source</a></sub></p>
+
+## <a name="s-exp.legba.json-schema/schema-validator-config">`schema-validator-config`</a><a name="s-exp.legba.json-schema/schema-validator-config"></a>
+
+
+
+
+Default reusable `SchemaValidatorsConfig` instance.
+
+  This configures the validator to:
+  - Enable JSON Schema reference preloading and caching
+  - Enable format assertions (per the JSON Schema spec)
+  - Set maximum reference nesting depth to 40
+  - Handle `nullable` fields correctly
+  - Use `JSON_PATH` for error paths in validation results
+
+  This config can be reused for schema load/validation for performance and consistency.
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L16-L33">Source</a></sub></p>
+
+## <a name="s-exp.legba.json-schema/validate!">`validate!`</a><a name="s-exp.legba.json-schema/validate!"></a>
+``` clojure
+
+(validate! schema val & {:as _opts, :keys [validation-result], :or {validation-result validation-result}})
+```
+
+Validates a value against a previously loaded or constructed schema.
+
+  Arguments:
+    - [[`schema`](#s-exp.legba.json-schema/schema)](#s-exp.legba.json-schema/schema): The schema object returned from [[`schema`](#s-exp.legba.json-schema/schema)](#s-exp.legba.json-schema/schema)
+    - `val`: The input to validate. Can be a JsonNode or a JSON string.
+    - `:validation-result` (optional): Override for the function used to extract
+  validation errors (defaults to this namespace's [[`validation-result`](#s-exp.legba.json-schema/validation-result)](#s-exp.legba.json-schema/validation-result)).
+
+  Returns:
+    A sequence of error maps (see [[`validation-result`](#s-exp.legba.json-schema/validation-result)](#s-exp.legba.json-schema/validation-result)), or nil if valid.
+
+  Example:
+    (validate! myschema "{"foo":42}")
+    (validate! myschema my-jackson-json-node)
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L90-L115">Source</a></sub></p>
+
+## <a name="s-exp.legba.json-schema/validation-result">`validation-result`</a><a name="s-exp.legba.json-schema/validation-result"></a>
+``` clojure
+
+(validation-result r)
+```
+
+Extracts validation errors from a ValidationResult object.
+
+  Arguments:
+    - `r` (ValidationResult): The result object returned by a validation call.
+
+  Returns:
+    A sequence of maps, one for each validation error, containing:
+    - `:type`: Error type string from validation
+    - `:path`: JSON path to offending element
+    - `:error`: Error code string
+    - `:message`: Human-friendly error message
+    Returns `nil` if the validation result contains no errors.
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L66-L88">Source</a></sub></p>
+
+-----
 # <a name="s-exp.legba.middleware">s-exp.legba.middleware</a>
 
 
@@ -453,6 +557,16 @@ Performs validation of response headers
 # <a name="s-exp.legba.router">s-exp.legba.router</a>
 
 
+Router utilities for HTTP request handling using matching on path/method.
+
+  Provides functions for building and matching routes, adapted from
+  clj-simple-router but modified to match on named path parameters
+  (e.g. '/foo/{bar}') and HTTP methods instead of simple wildcards.
+
+  Exposes:
+  - make-matcher: Builds a matcher from a set of routes.
+  - match: Attempts to match a matcher against a Ring-style request.
+  - router: Builds a matcher from an OpenAPI schema and optional extra routes.
 
 
 
@@ -464,7 +578,7 @@ Performs validation of response headers
 ```
 
 Given set of routes, builds matcher structure. See [`router`](#s-exp.legba.router/router)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L78-L83">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L85-L90">Source</a></sub></p>
 
 ## <a name="s-exp.legba.router/match">`match`</a><a name="s-exp.legba.router/match"></a>
 ``` clojure
@@ -474,7 +588,7 @@ Given set of routes, builds matcher structure. See [`router`](#s-exp.legba.route
 
 Given `matcher` attempts to match against ring request, return match (tuple of
   `data` & `path-params`)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L85-L89">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L92-L96">Source</a></sub></p>
 
 ## <a name="s-exp.legba.router/router">`router`</a><a name="s-exp.legba.router/router"></a>
 ``` clojure
@@ -489,7 +603,7 @@ Given `matcher` attempts to match against ring request, return match (tuple of
 Creates a router that matches by method/path for a given `schema`.
   `extra-routes` can be passed to add non openapi centric routes to the routing
   table
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L91-L103">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L98-L110">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.schema">s-exp.legba.schema</a>
