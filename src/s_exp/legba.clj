@@ -40,7 +40,10 @@
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
-    to `s-exp.legba.openapi-schema/validation-result`"
+    to `s-exp.legba.openapi-schema/validation-result`
+
+  * `soft-response-validation` - boolean, if true response validation doesn't
+  throw and assocs the error on the ring response as response-validation-error."
   [routes schema & {:as opts}]
   (let [opts (merge default-options opts)]
     (reduce (-> (fn [m [[method path :as coords] handler]]
@@ -76,7 +79,10 @@
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
     to `s-exp.legba.openapi-schema/validation-result`
 
-  * `:extra-routes` - extra routes to be passed to the underlying router"
+  * `:extra-routes` - extra routes to be passed to the underlying router
+
+  * `soft-response-validation` - boolean, if true response validation doesn't
+  throw and assocs the error on the ring response as response-validation-error.  "
   [routes schema & {:as opts
                     :keys [path-params-key]}]
   (let [{:as opts :keys [not-found-response]}
