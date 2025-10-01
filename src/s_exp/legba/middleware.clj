@@ -7,7 +7,8 @@
 (defn wrap-validation
   "Takes a regular RING handler returns a handler that will apply openapi
   validation from the supplied `schema` for a given `method` and `path`"
-  [handler schema method path opts]
+  [handler schema method path {:as opts
+                               :keys [soft-response-validation]}]
   (let [sub-schema (get-in schema [:openapi-schema "paths" path (name method)])]
     (-> (fn [request]
           (let [request (request/validate
@@ -16,16 +17,18 @@
                          sub-schema
                          opts)
                 response (handler request)]
-            (response/validate response
-                               schema
-                               sub-schema
-                               opts)))
+            (if soft-response-validation
+              (try
+                (response/validate response schema sub-schema opts)
+                (catch Exception e
+                  (assoc response :response-validation-error e)))
+              (response/validate response schema sub-schema opts))))
         (vary-meta assoc
                    :schema schema
                    :sub-schema sub-schema))))
 
 (defmulti ex->response
-  (fn [e opts] (some-> e ex/ex-type))
+  (fn [e _opts] (some-> e ex/ex-type))
   :hierarchy ex/hierarchy)
 
 (defmethod ex->response
