@@ -40,7 +40,8 @@
          {:body {:name "yolo"
                  :id item-id
                  :value 1.0}
-          :status 201}}}]
+          :status 201}}}
+   & [opts]]
   (l/routing-handler {[:get "/item/{itemId}"]
                       (fn [_request] item-by-id-response)
                       [:get "/items"]
@@ -48,7 +49,8 @@
                       [:get "/search"]
                       (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)}
-                     schema-path))
+                     schema-path
+                     opts))
 
 (deftest requests-test-yaml
   (let [h (make-handler {:schema-path "classpath://schema/oas/3.1/store.yaml"})]
@@ -250,7 +252,19 @@
                  "name" {"type" "string"},
                  "value" {"type" "number"}}}}},
              "description" "Item created successfully."},
-            "message" "Invalid response content-type"} body))))
+            "message" "Invalid response content-type"} body)))
+
+  (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
+                                               :status 201}}
+                        {:soft-response-validation 200})
+        {:as _r :keys [status]}
+        (read-body-as-edn
+         (h {:request-method :post
+             :headers {"content-type" "application/json"}
+             :uri "/items"
+             :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
+    (is (= status 201)
+        "even tho response body is not correct, validation let it through")))
 
 (deftest error-output-test
   (is true))
