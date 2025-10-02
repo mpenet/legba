@@ -256,7 +256,7 @@
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
                                                :status 201}}
-                        {:soft-response-validation 200})
+                        {:soft-response-validation true})
         {:as _r :keys [status]}
         (read-body-as-edn
          (h {:request-method :post
