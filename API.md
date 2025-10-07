@@ -23,7 +23,8 @@
 -  [`s-exp.legba.json-schema`](#s-exp.legba.json-schema)  - JSON Schema validation utilities.
     -  [`schema`](#s-exp.legba.json-schema/schema) - Loads and builds a JSON Schema validator instance from a URI or file path.
     -  [`schema-validator-config`](#s-exp.legba.json-schema/schema-validator-config) - Default reusable <code>SchemaValidatorsConfig</code> instance.
-    -  [`validate!`](#s-exp.legba.json-schema/validate!) - Validates a value against a previously loaded or constructed schema.
+    -  [`validate`](#s-exp.legba.json-schema/validate) - Validates a value against a previously loaded or constructed schema.
+    -  [`validate!`](#s-exp.legba.json-schema/validate!) - Validates a value against a given JSON Schema and throws if invalid.
     -  [`validation-result`](#s-exp.legba.json-schema/validation-result) - Extracts validation errors from a ValidationResult object.
 -  [`s-exp.legba.middleware`](#s-exp.legba.middleware) 
     -  [`ex->response`](#s-exp.legba.middleware/ex->response)
@@ -321,7 +322,7 @@ Loads and builds a JSON Schema validator instance from a URI or file path.
     (schema "classpath:///tmp/foo.schema.json")
     (schema "file:///data/schema/bar.json")
     (schema "https://schemas.org/example.schema.json")
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L38-L67">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L39-L68">Source</a></sub></p>
 
 ## <a name="s-exp.legba.json-schema/schema-validator-config">`schema-validator-config`</a><a name="s-exp.legba.json-schema/schema-validator-config"></a>
 
@@ -338,12 +339,12 @@ Default reusable `SchemaValidatorsConfig` instance.
   - Use `JSON_PATH` for error paths in validation results
 
   This config can be reused for schema load/validation for performance and consistency.
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L19-L36">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L20-L37">Source</a></sub></p>
 
-## <a name="s-exp.legba.json-schema/validate!">`validate!`</a><a name="s-exp.legba.json-schema/validate!"></a>
+## <a name="s-exp.legba.json-schema/validate">`validate`</a><a name="s-exp.legba.json-schema/validate"></a>
 ``` clojure
 
-(validate! schema val & {:as _opts, :keys [validation-result], :or {validation-result validation-result}})
+(validate schema val & {:as _opts, :keys [validation-result], :or {validation-result validation-result}})
 ```
 
 Validates a value against a previously loaded or constructed schema.
@@ -358,9 +359,38 @@ Validates a value against a previously loaded or constructed schema.
     A sequence of error maps (see [[`validation-result`](#s-exp.legba.json-schema/validation-result)](#s-exp.legba.json-schema/validation-result)), or nil if valid.
 
   Example:
-    (validate! myschema "{"foo":42}")
+    (validate myschema "{"foo":42}")
+    (validate myschema my-jackson-json-node)
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L94-L119">Source</a></sub></p>
+
+## <a name="s-exp.legba.json-schema/validate!">`validate!`</a><a name="s-exp.legba.json-schema/validate!"></a>
+``` clojure
+
+(validate! schema val & {:as opts})
+```
+
+Validates a value against a given JSON Schema and throws if invalid.
+
+  Arguments:
+    - [[`schema`](#s-exp.legba.json-schema/schema)](#s-exp.legba.json-schema/schema) (JsonSchema): A schema instance created by the [[`schema`](#s-exp.legba.json-schema/schema)](#s-exp.legba.json-schema/schema) function.
+    - `val`: The data to validate (can be a Jackson JsonNode or a JSON string).
+    - Optional keyword arguments:
+        - `:validation-result`: Custom function to extract validation errors
+          (defaults to this namespace's [[`validation-result`](#s-exp.legba.json-schema/validation-result)](#s-exp.legba.json-schema/validation-result)).
+
+  Behavior:
+    - If validation succeeds (no errors), returns nil.
+    - If validation fails, throws an ex-info exception with:
+        :type   --> :s-exp.legba.json-schema/failed-validation
+        :errors --> Sequence of error maps (see [[`validation-result`](#s-exp.legba.json-schema/validation-result)](#s-exp.legba.json-schema/validation-result)).
+        :val    --> The input value that failed validation.
+
+  Example:
+    (validate! myschema "{"name":42}") ; throws if invalid
     (validate! myschema my-jackson-json-node)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L93-L118">Source</a></sub></p>
+
+  Useful for workflows where validation failure should abort or be handled via exception.
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L121-L149">Source</a></sub></p>
 
 ## <a name="s-exp.legba.json-schema/validation-result">`validation-result`</a><a name="s-exp.legba.json-schema/validation-result"></a>
 ``` clojure
@@ -380,7 +410,7 @@ Extracts validation errors from a ValidationResult object.
     - `:error`: Error code string
     - `:message`: Human-friendly error message
     Returns `nil` if the validation result contains no errors.
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L69-L91">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L70-L92">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.middleware">s-exp.legba.middleware</a>

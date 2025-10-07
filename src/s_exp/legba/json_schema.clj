@@ -1,7 +1,7 @@
 (ns s-exp.legba.json-schema
   "JSON Schema validation utilities.
    Provides helpers to load, cache, and validate JSON Schemas"
-  (:require [exoscal.ex :as ex])
+  (:require [exoscale.ex :as ex])
   (:import (com.fasterxml.jackson.databind JsonNode)
            (com.networknt.schema JsonSchema
                                  JsonSchemaFactory
