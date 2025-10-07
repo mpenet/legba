@@ -1,6 +1,7 @@
 (ns s-exp.legba.json-schema
   "JSON Schema validation utilities.
    Provides helpers to load, cache, and validate JSON Schemas"
+  (:require [exoscal.ex :as ex])
   (:import (com.fasterxml.jackson.databind JsonNode)
            (com.networknt.schema JsonSchema
                                  JsonSchemaFactory
@@ -90,7 +91,7 @@
                     :message (.getMessage m)}))
             vms))))
 
-(defn validate!
+(defn validate
   "Validates a value against a previously loaded or constructed schema.
 
   Arguments:
@@ -103,8 +104,8 @@
     A sequence of error maps (see `validation-result`), or nil if valid.
 
   Example:
-    (validate! myschema \"{\"foo\":42}\")
-    (validate! myschema my-jackson-json-node)"
+    (validate myschema \"{\"foo\":42}\")
+    (validate myschema my-jackson-json-node)"
   [^JsonSchema schema val
    & {:as _opts
       :keys [validation-result]
@@ -116,3 +117,36 @@
      (.validate schema (or ^String val "")
                 InputFormat/JSON
                 OutputFormat/RESULT))))
+
+(defn validate!
+  "Validates a value against a given JSON Schema and throws if invalid.
+
+  Arguments:
+    - `schema` (JsonSchema): A schema instance created by the `schema` function.
+    - `val`: The data to validate (can be a Jackson JsonNode or a JSON string).
+    - Optional keyword arguments:
+        - `:validation-result`: Custom function to extract validation errors 
+          (defaults to this namespace's `validation-result`).
+
+  Behavior:
+    - If validation succeeds (no errors), returns nil.
+    - If validation fails, throws an ex-info exception with:
+        :type   --> :s-exp.legba.json-schema/failed-validation
+        :errors --> Sequence of error maps (see `validation-result`).
+        :val    --> The input value that failed validation.
+
+  Example:
+    (validate! myschema \"{\"name\":42}\") ; throws if invalid
+    (validate! myschema my-jackson-json-node)
+
+  Useful for workflows where validation failure should abort or be handled via exception."
+  [^JsonSchema schema val
+   & {:as opts}]
+  (when-let [errors (validate schema val opts)]
+    (ex-info "Failed validation"
+             {:type :s-exp.legba.json-schema/invalid-value
+              :errors errors
+              :val val})))
+
+(ex/derive :s-exp.legba.json-schema/invalid-value
+           :s-exp.legba/invalid)
