@@ -79,7 +79,6 @@ You can either:
 - `http-method` is a keyword: e.g. `:get`, `:put`, `:patch`, etc.
 - `path` is a string using `{param}` for path parameters—matching OpenAPI.
 - All path parameters will be extracted and made available in the request under `:path-params` (default, configurable).
-- The route must exactly match a route specified in the OpenAPI schema.
 - You can define routes with multiple or nested parameters: `/foo/{id}/bar/{otherId}`
 - You can define routes with prefixes such as `/foo/bar/*`, in which case any
   request starting with `/foo/bar/` will be accepted.
