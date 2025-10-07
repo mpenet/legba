@@ -64,6 +64,28 @@ You can either:
   networknt/json-schema-validator). This handler can simply be plugged to a RING
   server adapter and you're good to go.
   
+## Route Syntax
+
+**Examples:**
+```clojure
+[:get "/items"]
+[:get "/item/{itemId}"]     ;; Path parameter
+[:post "/items"]
+[:delete "/user/{userId}/role/{roleId}"] ;; Multiple params
+[:get "/assets/*"] ;; Prefix matching
+```
+
+**Route Syntax Rules:**
+- `http-method` is a keyword: e.g. `:get`, `:put`, `:patch`, etc.
+- `path` is a string using `{param}` for path parameters—matching OpenAPI.
+- All path parameters will be extracted and made available in the request under `:path-params` (default, configurable).
+- The route must exactly match a route specified in the OpenAPI schema.
+- You can define routes with multiple or nested parameters: `/foo/{id}/bar/{otherId}`
+- You can define routes with prefixes such as `/foo/bar/*`, in which case any
+  request starting with `/foo/bar/` will be accepted.
+- Additional static or catch-all routes can be added via the `:extra-routes`
+  option (for custom needs outside of the OpenAPI schema).
+
 ## Installation
 
 [![Clojars Project](https://img.shields.io/clojars/v/com.s-exp/legba.svg)](https://clojars.org/com.s-exp/legba)
