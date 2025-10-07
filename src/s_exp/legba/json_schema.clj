@@ -125,7 +125,7 @@
     - `schema` (JsonSchema): A schema instance created by the `schema` function.
     - `val`: The data to validate (can be a Jackson JsonNode or a JSON string).
     - Optional keyword arguments:
-        - `:validation-result`: Custom function to extract validation errors 
+        - `:validation-result`: Custom function to extract validation errors
           (defaults to this namespace's `validation-result`).
 
   Behavior:
@@ -143,10 +143,10 @@
   [^JsonSchema schema val
    & {:as opts}]
   (when-let [errors (validate schema val opts)]
-    (ex-info "Failed validation"
-             {:type :s-exp.legba.json-schema/invalid-value
-              :errors errors
-              :val val})))
+    (throw (ex-info "Invalid value"
+                    {:type :s-exp.legba.json-schema/invalid-value
+                     :errors errors
+                     :val val}))))
 
 (ex/derive :s-exp.legba.json-schema/invalid-value
            :s-exp.legba/invalid)
