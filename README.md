@@ -175,6 +175,39 @@ Define a simple JSON schema file `json-schema.json`
     (json-schema/validate!  "{\"name\":\"Alice\",\"age\":30}"))
 ```
 
+## OpenAPI Overlay Support
+
+Legba provides utilities for [OpenAPI Overlay](https://spec.openapis.org/overlay/latest.html) via `s-exp.legba.overlay`.
+
+This allows you to dynamically update or remove parts of your OpenAPI schema
+using overlay instructions, making it easy to tailor or extend schemas
+programmatically.
+
+### Main Functionality
+
+- The core function is `s-exp.legba.overlay/apply`:
+  - Takes an OpenAPI schema (as a JSON string) and overlay instructions (as a JSON string).
+  - Applies update/remove actions as per the overlay specification, returning the modified schema.
+
+### Example
+
+```clojure
+(require '[s-exp.legba.overlay :as overlay])
+
+(def openapi-schema
+  (slurp "path/to/openapi.json"))
+(def overlay-json
+  "{\"actions\": [
+      {\"target\": \"$..['x-private']\", \"remove\": true}
+    ]}")
+
+;; Returns updated schema JSON string with actions applied
+(overlay/apply openapi-schema overlay-json)
+```
+
+This can be useful for customizing schemas for different consumers, removing
+internal fields, or overlaying additional information as needed.
+
 ### Documentation
 
 [API docs](API.md)
