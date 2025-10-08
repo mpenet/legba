@@ -72,23 +72,3 @@ https://spec.openapis.org/overlay/latest.html  "
                  (apply-remove target remove)))
              openapi
              (get overlay "actions")))))
-
-;; (def doc
-;;   "String containing contents of OpenAPI schema from store.json resource."
-;;   (slurp (io/resource "schema.json")))
-
-;; (def overlay "{
-;;   \"overlay\": \"1.0.0\",
-;;   \"info\": {
-;;     \"title\": \"Targeted Overlay\",
-;;     \"version\": \"1.0.0\"
-;;   },
-;;   \"actions\": [
-;;     {
-;;       \"target\": \"$..['x-private']\",
-;;       \"remove\": true
-;;     }
-;;   ]
-;; }")
-
-;; (apply doc overlay)
