@@ -40,6 +40,9 @@
     -  [`schema-validator-config`](#s-exp.legba.openapi-schema/schema-validator-config)
     -  [`validate!`](#s-exp.legba.openapi-schema/validate!) - Validates a <code>val</code> against <code>schema</code>.
     -  [`validation-result`](#s-exp.legba.openapi-schema/validation-result) - Default validation result output function, can be overidden via <code>:validation-result</code> option of <code>s-exp.legba/*</code> calls.
+-  [`s-exp.legba.overlay`](#s-exp.legba.overlay)  - Provides overlay manipulation utilities for OpenAPI schemas, enabling dynamic updates or removals on schema documents using OpenAPI Overlay instructions.
+    -  [`apply`](#s-exp.legba.overlay/apply) - Apply overlay actions (update/remove) to the given OpenAPI schema string.
+    -  [`conf`](#s-exp.legba.overlay/conf)
 -  [`s-exp.legba.request`](#s-exp.legba.request) 
     -  [`cookie-params-schema`](#s-exp.legba.request/cookie-params-schema) - Matches <code>param-type</code> for "cookie".
     -  [`path-params-schema`](#s-exp.legba.request/path-params-schema) - Matches <code>param-type</code> for "path".
@@ -535,6 +538,38 @@ Validates a `val` against `schema`
 Default validation result output function, can be overidden via
   `:validation-result` option of `s-exp.legba/*` calls
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L61-L73">Source</a></sub></p>
+
+-----
+# <a name="s-exp.legba.overlay">s-exp.legba.overlay</a>
+
+
+Provides overlay manipulation utilities for OpenAPI schemas, enabling dynamic
+  updates or removals on schema documents using OpenAPI Overlay instructions.
+https://spec.openapis.org/overlay/latest.html  
+
+
+
+
+## <a name="s-exp.legba.overlay/apply">`apply`</a><a name="s-exp.legba.overlay/apply"></a>
+``` clojure
+
+(apply openapi-string overlay-string)
+```
+
+Apply overlay actions (update/remove) to the given OpenAPI schema string.
+
+  Parameters:
+  - openapi-string: String, JSON representation of the OpenAPI schema
+  - overlay-string: String, JSON representation of the overlay instructions
+
+  Returns the OpenAPI schema with all overlay actions applied as String
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/overlay.clj#L55-L74">Source</a></sub></p>
+
+## <a name="s-exp.legba.overlay/conf">`conf`</a><a name="s-exp.legba.overlay/conf"></a>
+
+
+
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/overlay.clj#L16-L19">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.request">s-exp.legba.request</a>
