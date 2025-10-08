@@ -18,6 +18,7 @@
     "paths": {
         "/search": {
             "get": {
+                "x-exo-private": true,
                 "summary": "Searches a list of items",
                 "description": "Search",
                 "parameters": [
