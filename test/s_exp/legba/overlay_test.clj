@@ -1,7 +1,7 @@
-(ns s-exp.overlay-test
+(ns s-exp.legba.overlay-test
   (:require [clojure.test :refer [deftest is testing]]
-            [s-exp.legba.overlay :as overlay]
-            [jsonista.core :as json]))
+            [jsonista.core :as json]
+            [s-exp.legba.overlay :as overlay]))
 
 (def base-schema
   ;; Minimal OpenAPI schema as JSON string
@@ -34,7 +34,7 @@
 (deftest apply-overlay-combined-test
   (testing "removes x-private and updates info.title"
     (let [overlay-combined
-            "{\"actions\": [
+          "{\"actions\": [
                 {\"target\": \"$.info.title\", \"update\": \"Overlayed Title\"},
                 {\"target\": \"$..['x-private']\", \"remove\": true}
             ]}"

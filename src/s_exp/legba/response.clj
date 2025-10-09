@@ -18,8 +18,7 @@
     (when-not ct-schema
       (throw (ex-info "Invalid response format for status"
                       {:type :s-exp.legba.response/invalid-format-for-status
-                       :schema sub-schema
-                       :message "Invalid response format for status"})))
+                       :schema sub-schema})))
     (if-let [body-schema (mime-type/match-schema-mime-type ct-schema content-type)]
       (let [json-body (json/json-content-type? content-type)
             ;; if we have a json-body we convert it to jsonnode for validation
@@ -39,8 +38,7 @@
           (assoc :body (json/json-node->str body))))
       (throw (ex-info "Invalid response content-type"
                       {:type :s-exp.legba.response/invalid-content-type
-                       :schema ct-schema
-                       :message "Invalid Response Content-Type"})))))
+                       :schema ct-schema})))))
 
 (defn validate-response-headers
   "Performs validation of response headers"

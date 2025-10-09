@@ -39,7 +39,6 @@
                       (throw (ex-info "Missing Required Query Parameter"
                                       {:type :s-exp.legba.request/missing-query-parameter
                                        :schema query-schema})))]]
-
       (when-let [errors (schema/validate! schema
                                           (get query-schema "schema")
                                           (pr-str (or param-val ""))
@@ -113,10 +112,11 @@
             (cond-> request
               json-body
               (assoc :body (json/json-node->clj body opts))))
-          (throw (ex-info "No matching content-type in schema for request"
+          (throw (ex-info "Invalid content type for request"
                           {:type :s-exp.legba.request/invalid-content-type
-                           :schema req-body-schema
-                           :message "Invalid content type for request"}))))
+                           :errors [{:pointer (-> req-body-schema meta :json-pointer)
+                                     :detail "No matching content-type"}]
+                           :schema req-body-schema}))))
       request)))
 
 (defn validate

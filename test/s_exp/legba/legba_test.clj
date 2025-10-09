@@ -1,4 +1,4 @@
-(ns s-exp.legba-test
+(ns s-exp.legba.legba-test
   (:require [clojure.java.io :as io]
             [clojure.test :refer [deftest is]]
             [jsonista.core :as jsonista]
@@ -69,19 +69,17 @@
             :body
             {"schema"
              {"itemId"
-              {"schema" {"format" "uuid" "type" "string"},
+              {"schema" {"type" "string", "format" "uuid"},
                "name" "itemId",
                "required" true,
                "description" "ID of the item to retrieve.",
                "in" "path"}},
              "errors"
-             [{"type" "format",
-               "path" "$",
-               "error"
-               "does not match the uuid pattern must be a valid RFC 4122 UUID",
-               "message"
-               "$: does not match the uuid pattern must be a valid RFC 4122 UUID"}]
-             "message" "Invalid Path Parameters"}}
+             [{"detail" "does not match the uuid pattern must be a valid RFC 4122 UUID",
+               "path" "$.paths['/item/{itemId}'].get.parameters[0].schema.format",
+               "pointer" "#/paths/~1item~1{itemId}/get/parameters/0/schema/format"}],
+             "title" "Invalid Path Parameters",
+             "type" "request:invalid-path-parameters"}}
            (read-body-as-edn (h {:request-method :get :uri "/item/ab"}))))
 
     (is (string? (:body (h {:request-method :get :uri (str "/item/" item-id)}))))
@@ -94,26 +92,28 @@
 
     (is (= {:status 400,
             :content-type "application/json",
-            :body
-            {"schema"
-             {"content"
-              {"application/json"
-               {"schema"
-                {"type" "object"
-                 "properties"
-                 {"name" {"description" "Name of the new item."
-                          "type" "string"},
-                  "value"
-                  {"description" "Numerical value for the new item.",
-                   "format" "float",
-                   "type" "number"}},
-                 "required" ["name" "value"]},
-                "examples"
-                {"newItem"
-                 {"summary" "Example of a new item to create",
-                  "value" {"name" "New Item C", "value" 15.75}}}}},
-              "required" true},
-             "message" "No matching content-type in schema for request"}}
+            :body {"schema"
+                   {"content"
+                    {"application/json"
+                     {"schema"
+                      {"properties"
+                       {"name" {"type" "string", "description" "Name of the new item."},
+                        "value"
+                        {"type" "number",
+                         "description" "Numerical value for the new item.",
+                         "format" "float"}},
+                       "required" ["name" "value"],
+                       "type" "object"},
+                      "examples"
+                      {"newItem"
+                       {"summary" "Example of a new item to create",
+                        "value" {"name" "New Item C", "value" 15.75}}}}},
+                    "required" true},
+                   "errors"
+                   [{"detail" "No matching content-type",
+                     "pointer" "/paths/~1items/post/requestBody"}],
+                   "title" "Invalid content type for request",
+                   "type" "request:invalid-content-type"}}
            (read-body-as-edn
             (h {:request-method :post
                 :headers {"content-type" "application/boom"}
@@ -122,26 +122,28 @@
 
     (is (= {:status 400,
             :content-type "application/json",
-            :body
-            {"schema"
-             {"content"
-              {"application/json"
-               {"schema"
-                {"type" "object"
-                 "properties"
-                 {"name" {"description" "Name of the new item."
-                          "type" "string"},
-                  "value"
-                  {"description" "Numerical value for the new item.",
-                   "format" "float"
-                   "type" "number"}},
-                 "required" ["name" "value"]},
-                "examples"
-                {"newItem"
-                 {"summary" "Example of a new item to create",
-                  "value" {"name" "New Item C", "value" 15.75}}}}},
-              "required" true},
-             "message" "No matching content-type in schema for request"}}
+            :body {"schema"
+                   {"content"
+                    {"application/json"
+                     {"schema"
+                      {"properties"
+                       {"name" {"type" "string", "description" "Name of the new item."},
+                        "value"
+                        {"type" "number",
+                         "description" "Numerical value for the new item.",
+                         "format" "float"}},
+                       "required" ["name" "value"],
+                       "type" "object"},
+                      "examples"
+                      {"newItem"
+                       {"summary" "Example of a new item to create",
+                        "value" {"name" "New Item C", "value" 15.75}}}}},
+                    "required" true},
+                   "errors"
+                   [{"detail" "No matching content-type",
+                     "pointer" "/paths/~1items/post/requestBody"}],
+                   "title" "Invalid content type for request",
+                   "type" "request:invalid-content-type"}}
            (read-body-as-edn
             (h {:request-method :post
                 :headers {"content-type" "application/boom"}
@@ -150,14 +152,14 @@
 
     (is (= {:status 400,
             :content-type "application/json",
-            :body
-            {"schema"
-             {"schema" {"type" "string"},
-              "name" "term",
-              "required" true,
-              "description" "Search term",
-              "in" "query"},
-             "message" "Missing Required Query Parameter"}}
+            :body {"schema"
+                   {"schema" {"type" "string"},
+                    "name" "term",
+                    "required" true,
+                    "description" "Search term",
+                    "in" "query"},
+                   "title" "Missing Required Query Parameter",
+                   "type" "request:missing-query-parameter"}}
            (read-body-as-edn
             (h {:request-method :get
                 :uri "/search"}))))
@@ -174,39 +176,41 @@
              :uri "/items"
              :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= status 400))
+
     (is (= {"schema"
-            {"responses"
+            {"description" "Adds a new item to the system.",
+             "requestBody"
+             {"content"
+              {"application/json"
+               {"examples"
+                {"newItem"
+                 {"summary" "Example of a new item to create",
+                  "value" {"name" "New Item C", "value" 15.75}}},
+                "schema"
+                {"properties"
+                 {"name" {"description" "Name of the new item.", "type" "string"},
+                  "value"
+                  {"description" "Numerical value for the new item.",
+                   "format" "float",
+                   "type" "number"}},
+                 "required" ["name" "value"],
+                 "type" "object"}}},
+              "required" true},
+             "responses"
              {"201"
               {"content"
                {"application/json"
                 {"schema"
-                 {"type" "object"
-                  "properties" {"id" {"format" "uuid" "type" "string"},
-                                "name" {"type" "string"},
-                                "value" {"type" "number"}}}}},
+                 {"properties"
+                  {"id" {"format" "uuid", "type" "string"},
+                   "name" {"type" "string"},
+                   "value" {"type" "number"}},
+                  "type" "object"}}},
                "description" "Item created successfully."},
               "400" {"description" "Invalid input."}},
-             "summary" "Create a new item",
-             "requestBody"
-             {"content"
-              {"application/json"
-               {"schema"
-                {"type" "object"
-                 "properties"
-                 {"name" {"description" "Name of the new item."
-                          "type" "string"},
-                  "value"
-                  {"description" "Numerical value for the new item.",
-                   "format" "float"
-                   "type" "number"}},
-                 "required" ["name" "value"]},
-                "examples"
-                {"newItem"
-                 {"summary" "Example of a new item to create",
-                  "value" {"name" "New Item C", "value" 15.75}}}}},
-              "required" true},
-             "description" "Adds a new item to the system."},
-            "message" "Invalid response format for status"}
+             "summary" "Create a new item"},
+            "title" "Invalid response format for status",
+            "type" "response:invalid-format-for-status"}
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
@@ -218,18 +222,20 @@
              :uri "/items"
              :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= status 400))
-    (is (= {"message" "Invalid Response Body",
+    (is (= {"errors"
+            [{"detail" "null found, object expected",
+              "path"
+              "$.paths['/items'].post.responses['201'].content['application/json'].schema.type",
+              "pointer"
+              "#/paths/~1items/post/responses/201/content/application~1json/schema/type"}],
             "schema"
-            {"type" "object"
-             "properties"
-             {"id" {"type" "string"
-                    "format" "uuid"},
+            {"properties"
+             {"id" {"format" "uuid", "type" "string"},
               "name" {"type" "string"},
-              "value" {"type" "number"}}},
-            "errors" [{"type" "type",
-                       "path" "$",
-                       "error" "null found, object expected",
-                       "message" "$: null found, object expected"}]}
+              "value" {"type" "number"}},
+             "type" "object"},
+            "title" "Invalid Response Body",
+            "type" "response:invalid-body"}
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/xx"}
@@ -245,14 +251,15 @@
             {"content"
              {"application/json"
               {"schema"
-               {"type" "object"
-                "properties"
-                {"id"
-                 {"type" "string" "format" "uuid"},
+               {"properties"
+                {"id" {"format" "uuid", "type" "string"},
                  "name" {"type" "string"},
-                 "value" {"type" "number"}}}}},
+                 "value" {"type" "number"}},
+                "type" "object"}}},
              "description" "Item created successfully."},
-            "message" "Invalid response content-type"} body)))
+            "title" "Invalid response content-type",
+            "type" "response:invalid-content-type"}
+           body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
                                                :status 201}}

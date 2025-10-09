@@ -85,10 +85,9 @@
     (when-not (empty? vms)
       (into []
             (map (fn [^ValidationMessage m]
-                   {:type (.getType m)
-                    :path (.toString (.getInstanceLocation m))
-                    :error (.getError m)
-                    :message (.getMessage m)}))
+                   {:path (.toString (.getEvaluationPath m))
+                    :pointer (str "#" (.getFragment (.getSchemaLocation m)))
+                    :detail (.getError m)}))
             vms))))
 
 (defn validate
