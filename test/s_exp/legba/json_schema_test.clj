@@ -16,17 +16,21 @@
         (is (= (js/validate schema invalid)
                [{:detail "required property 'veggieName' not found",
                  :path "$.properties.vegetables.items['$ref'].required",
+                 :location "$.vegetables[0]"
                  :pointer "#/$defs/veggie/required"}]))))
     (testing "Wrong type errors for arrays or objects"
       (let [invalid "{\"fruits\": [1,2,3], \"vegetables\": []}"]
         (is (= (js/validate schema invalid)
                [{:detail "integer found, string expected",
                  :path "$.properties.fruits.items.type",
+                 :location "$.fruits[0]"
                  :pointer "#/properties/fruits/items/type"}
                 {:detail "integer found, string expected",
                  :path "$.properties.fruits.items.type",
+                 :location "$.fruits[1]"
                  :pointer "#/properties/fruits/items/type"}
                 {:detail "integer found, string expected",
+                 :location "$.fruits[2]"
                  :path "$.properties.fruits.items.type",
                  :pointer "#/properties/fruits/items/type"}]))))))
 
@@ -36,5 +40,6 @@
       (let [invalid "{\"vegetables\":[{\"veggieLike\":false}]}"]
         (is (= (js/validate schema invalid)
                [{:detail "required property 'veggieName' not found",
+                 :location "$.vegetables[0]"
                  :path "$.properties.vegetables.items['$ref'].required",
                  :pointer "#/$defs/veggie/required"}]))))))
