@@ -44,6 +44,8 @@ Legba ensures that the final OpenAPI file exposed to your users remains
 
 * Provide **detailed**, informative and **customizable error messages**
 
+* Defaults to https://datatracker.ietf.org/doc/html/rfc9457 for error formatting
+
 * Works with both **JSON and YAML OpenAPI schemas**
 
 
@@ -95,7 +97,17 @@ Or via git deps:
 com.s-exp/legba {:git/url "https://github.com/mpenet/legba.git" :git/sha "..."}
 ```
 
+## Documentation
+
+[API docs](API.md)
+
 ## Usage 
+
+/!\ 
+
+Please note that this is still an alpha release. While it is fairly stable and I
+make an effort to maintain API contracts, some aspects are still under
+development. I reserve the right to make changes until the alpha tag is removed.
 
 ``` clj
 (require '[s-exp.legba :as l])
@@ -208,9 +220,6 @@ programmatically.
 This can be useful for customizing schemas for different consumers, removing
 internal fields, or overlaying additional information as needed.
 
-### Documentation
-
-[API docs](API.md)
 
 ## License
 
