@@ -25,9 +25,10 @@
     -  [`schema-validator-config`](#s-exp.legba.json-schema/schema-validator-config) - Default reusable <code>SchemaValidatorsConfig</code> instance.
     -  [`validate`](#s-exp.legba.json-schema/validate) - Validates a value against a previously loaded or constructed schema.
     -  [`validate!`](#s-exp.legba.json-schema/validate!) - Validates a value against a given JSON Schema and throws if invalid.
-    -  [`validation-result`](#s-exp.legba.json-schema/validation-result) - Extracts validation errors from a ValidationResult object.
+    -  [`validation-result`](#s-exp.legba.json-schema/validation-result) - Extracts and formats schema validation errors from a ValidationResult object.
 -  [`s-exp.legba.middleware`](#s-exp.legba.middleware) 
     -  [`ex->response`](#s-exp.legba.middleware/ex->response)
+    -  [`ex->rfc9457-type`](#s-exp.legba.middleware/ex->rfc9457-type)
     -  [`wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) - Wraps handler with error checking middleware that will transform validation Exceptions to equivalent http response, as infered per <code>ex-&gt;response</code>.
     -  [`wrap-error-response-fn`](#s-exp.legba.middleware/wrap-error-response-fn)
     -  [`wrap-validation`](#s-exp.legba.middleware/wrap-validation) - Takes a regular RING handler returns a handler that will apply openapi validation from the supplied <code>schema</code> for a given <code>method</code> and <code>path</code>.
@@ -38,8 +39,7 @@
     -  [`get-schema`](#s-exp.legba.openapi-schema/get-schema) - Returns json-schema from json-schema-factory at <code>schema-uri</code>/<code>json-pointer</code>.
     -  [`load-schema`](#s-exp.legba.openapi-schema/load-schema) - Loads JSON or YAML schema from <code>schema-uri</code> and returns map (of :openapi-schema, :schema-uri, :json-schema-factory) that contains all the necessary information to perform <code>validate!</code> calls later (minus a JSON pointer).
     -  [`schema-validator-config`](#s-exp.legba.openapi-schema/schema-validator-config)
-    -  [`validate!`](#s-exp.legba.openapi-schema/validate!) - Validates a <code>val</code> against <code>schema</code>.
-    -  [`validation-result`](#s-exp.legba.openapi-schema/validation-result) - Default validation result output function, can be overidden via <code>:validation-result</code> option of <code>s-exp.legba/*</code> calls.
+    -  [`validate`](#s-exp.legba.openapi-schema/validate) - Validates a <code>val</code> against <code>schema</code>.
 -  [`s-exp.legba.overlay`](#s-exp.legba.overlay)  - Provides overlay manipulation utilities for OpenAPI schemas, enabling dynamic updates or removals on schema documents using OpenAPI Overlay instructions.
     -  [`apply`](#s-exp.legba.overlay/apply) - Apply overlay actions (update/remove) to the given OpenAPI schema string.
     -  [`conf`](#s-exp.legba.overlay/conf)
@@ -96,7 +96,7 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
-    to [`s-exp.legba.openapi-schema/validation-result`](#s-exp.legba.openapi-schema/validation-result)
+    to `s-exp.legba.openapi-schema/validation-result`
 
   * `soft-response-validation` - boolean, if true response validation doesn't
   throw and assocs the error on the ring response as response-validation-error.
@@ -136,7 +136,7 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
 
   * `:validation-result` - function that controls how to turn
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
-    to [`s-exp.legba.openapi-schema/validation-result`](#s-exp.legba.openapi-schema/validation-result)
+    to `s-exp.legba.openapi-schema/validation-result`
 
   * `:extra-routes` - extra routes to be passed to the underlying router
 
@@ -401,18 +401,17 @@ Validates a value against a given JSON Schema and throws if invalid.
 (validation-result r)
 ```
 
-Extracts validation errors from a ValidationResult object.
+Extracts and formats schema validation errors from a ValidationResult object.
 
-  Arguments:
-    - `r` (ValidationResult): The result object returned by a validation call.
+  Takes a NetworkNT ValidationResult and returns a vector of error maps,
+  where each map contains:
+    - :path     (string)   JSON path of the error location
+    - :pointer  (string)   JSON pointer to the schema fragment
+    - :location (string)   Instance location in the JSON document
+    - :detail   (string)   Validation error message/detail
 
-  Returns:
-    A sequence of maps, one for each validation error, containing:
-    - `:type`: Error type string from validation
-    - `:path`: JSON path to offending element
-    - `:error`: Error code string
-    - `:message`: Human-friendly error message
-    Returns `nil` if the validation result contains no errors.
+  Returns nil if there are no errors. Useful for turning validator output into
+  a more consumable shape for clients, APIs, or error reporting.
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/json_schema.clj#L70-L92">Source</a></sub></p>
 
 -----
@@ -427,7 +426,13 @@ Extracts validation errors from a ValidationResult object.
 
 
 
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L30-L32">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L46-L48">Source</a></sub></p>
+
+## <a name="s-exp.legba.middleware/ex->rfc9457-type">`ex->rfc9457-type`</a><a name="s-exp.legba.middleware/ex->rfc9457-type"></a>
+
+
+
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L31-L32">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-error-response">`wrap-error-response`</a><a name="s-exp.legba.middleware/wrap-error-response"></a>
 ``` clojure
@@ -437,14 +442,14 @@ Extracts validation errors from a ValidationResult object.
 
 Wraps handler with error checking middleware that will transform validation
   Exceptions to equivalent http response, as infered per [`ex->response`](#s-exp.legba.middleware/ex->response)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L61-L66">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L77-L82">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-error-response-fn">`wrap-error-response-fn`</a><a name="s-exp.legba.middleware/wrap-error-response-fn"></a>
 ``` clojure
 
 (wrap-error-response-fn handler req opts)
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L52-L59">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L68-L75">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-validation">`wrap-validation`</a><a name="s-exp.legba.middleware/wrap-validation"></a>
 ``` clojure
@@ -454,7 +459,7 @@ Wraps handler with error checking middleware that will transform validation
 
 Takes a regular RING handler returns a handler that will apply openapi
   validation from the supplied `schema` for a given `method` and `path`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L7-L28">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L8-L29">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.mime-type">s-exp.legba.mime-type</a>
@@ -495,7 +500,7 @@ Matches `content-type` with `schema`, return resulting `sub-schema`
 ```
 
 Returns json-schema from json-schema-factory at `schema-uri`/`json-pointer`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L30-L37">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L29-L36">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/load-schema">`load-schema`</a><a name="s-exp.legba.openapi-schema/load-schema"></a>
 ``` clojure
@@ -505,39 +510,29 @@ Returns json-schema from json-schema-factory at `schema-uri`/`json-pointer`
 
 Loads JSON or YAML schema from `schema-uri` and returns
   map (of :openapi-schema, :schema-uri, :json-schema-factory) that contains all
-  the necessary information to perform [`validate!`](#s-exp.legba.openapi-schema/validate!) calls later (minus a JSON
+  the necessary information to perform `validate!` calls later (minus a JSON
   pointer).
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L39-L59">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L38-L58">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/schema-validator-config">`schema-validator-config`</a><a name="s-exp.legba.openapi-schema/schema-validator-config"></a>
 
 
 
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L20-L28">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L19-L27">Source</a></sub></p>
 
-## <a name="s-exp.legba.openapi-schema/validate!">`validate!`</a><a name="s-exp.legba.openapi-schema/validate!"></a>
+## <a name="s-exp.legba.openapi-schema/validate">`validate`</a><a name="s-exp.legba.openapi-schema/validate"></a>
 ``` clojure
 
-(validate!
+(validate
  {:as _schema, :keys [schema-uri json-schema-factory]}
  sub-schema
  val
  &
- {:as _opts, :keys [validation-result], :or {validation-result validation-result}})
+ {:as _opts, :keys [validation-result], :or {validation-result json-schema/validation-result}})
 ```
 
 Validates a `val` against `schema`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L75-L91">Source</a></sub></p>
-
-## <a name="s-exp.legba.openapi-schema/validation-result">`validation-result`</a><a name="s-exp.legba.openapi-schema/validation-result"></a>
-``` clojure
-
-(validation-result r)
-```
-
-Default validation result output function, can be overidden via
-  `:validation-result` option of `s-exp.legba/*` calls
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L61-L73">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L60-L76">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.overlay">s-exp.legba.overlay</a>
@@ -610,7 +605,7 @@ Matches `param-type` for "query"
 ```
 
 Performs validation of RING request map
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L122-L129">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L126-L133">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-body">`validate-body`</a><a name="s-exp.legba.request/validate-body"></a>
 ``` clojure
@@ -619,7 +614,7 @@ Performs validation of RING request map
 ```
 
 Performs eventual validation of request `:body`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L90-L120">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L93-L124">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-cookie-params">`validate-cookie-params`</a><a name="s-exp.legba.request/validate-cookie-params"></a>
 ``` clojure
@@ -628,7 +623,7 @@ Performs eventual validation of request `:body`
 ```
 
 Performs eventual validation of "parameters" of type "cookie"
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L53-L72">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L54-L75">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-path-params">`validate-path-params`</a><a name="s-exp.legba.request/validate-path-params"></a>
 ``` clojure
@@ -637,7 +632,7 @@ Performs eventual validation of "parameters" of type "cookie"
 ```
 
 Performs extensive validation of "path" "parameters"
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L74-L88">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L77-L91">Source</a></sub></p>
 
 ## <a name="s-exp.legba.request/validate-query-params">`validate-query-params`</a><a name="s-exp.legba.request/validate-query-params"></a>
 ``` clojure
@@ -646,7 +641,7 @@ Performs extensive validation of "path" "parameters"
 ```
 
 Performs eventual validation of "parameters" of type "query"
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L30-L51">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/request.clj#L30-L52">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.response">s-exp.legba.response</a>
@@ -663,7 +658,7 @@ Performs eventual validation of "parameters" of type "query"
 ```
 
 Performs validation of RING response map
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L64-L69">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L62-L67">Source</a></sub></p>
 
 ## <a name="s-exp.legba.response/validate-response-body">`validate-response-body`</a><a name="s-exp.legba.response/validate-response-body"></a>
 ``` clojure
@@ -672,7 +667,7 @@ Performs validation of RING response map
 ```
 
 Performs eventual validation of response body
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L8-L43">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L8-L41">Source</a></sub></p>
 
 ## <a name="s-exp.legba.response/validate-response-headers">`validate-response-headers`</a><a name="s-exp.legba.response/validate-response-headers"></a>
 ``` clojure
@@ -681,7 +676,7 @@ Performs eventual validation of response body
 ```
 
 Performs validation of response headers
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L45-L62">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/response.clj#L43-L60">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.router">s-exp.legba.router</a>

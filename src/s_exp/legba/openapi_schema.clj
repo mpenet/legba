@@ -1,6 +1,7 @@
 (ns s-exp.legba.openapi-schema
   (:require [s-exp.legba.json :as json]
-            [s-exp.legba.json-pointer :as json-pointer])
+            [s-exp.legba.json-pointer :as json-pointer]
+            [s-exp.legba.json-schema :as json-schema])
   (:import (com.fasterxml.jackson.databind JsonNode)
            (com.networknt.schema JsonSchemaFactory
                                  JsonSchemaFactory$Builder
@@ -9,9 +10,7 @@
                                  InputFormat
                                  OutputFormat
                                  SchemaLocation)
-           (com.networknt.schema ValidationResult
-                                 ValidationMessage
-                                 SpecVersion$VersionFlag
+           (com.networknt.schema SpecVersion$VersionFlag
                                  PathType)
            (com.networknt.schema.oas OpenApi31)))
 
@@ -58,27 +57,13 @@
      :schema-uri schema-uri
      :json-schema-factory schema-factory}))
 
-(defn validation-result
-  "Default validation result output function, can be overidden via
-  `:validation-result` option of `s-exp.legba/*` calls"
-  [^ValidationResult r]
-  (let [vms (.getValidationMessages r)]
-    (when-not (empty? vms)
-      (into []
-            (map (fn [^ValidationMessage m]
-                   {:type (.getType m)
-                    :path (.toString (.getInstanceLocation m))
-                    :error (.getError m)
-                    :message (.getMessage m)}))
-            vms))))
-
-(defn validate!
+(defn validate
   "Validates a `val` against `schema`"
   [{:as _schema :keys [schema-uri json-schema-factory]}
    sub-schema val
    & {:as _opts
       :keys [validation-result]
-      :or {validation-result validation-result}}]
+      :or {validation-result json-schema/validation-result}}]
   (let [ptr (:json-pointer (meta sub-schema))
         ^JsonSchema schema (get-schema json-schema-factory
                                        schema-uri ptr)]

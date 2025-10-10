@@ -1,4 +1,4 @@
-(ns s-exp.router-test
+(ns s-exp.legba.router-test
   (:require
    [clojure.test :as test :refer [are deftest]]
    [s-exp.legba.router :as router]))

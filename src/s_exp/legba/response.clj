@@ -18,17 +18,16 @@
     (when-not ct-schema
       (throw (ex-info "Invalid response format for status"
                       {:type :s-exp.legba.response/invalid-format-for-status
-                       :schema sub-schema
-                       :message "Invalid response format for status"})))
+                       :schema sub-schema})))
     (if-let [body-schema (mime-type/match-schema-mime-type ct-schema content-type)]
       (let [json-body (json/json-content-type? content-type)
             ;; if we have a json-body we convert it to jsonnode for validation
             ;; and later returning handler value
             body (cond-> body json-body json/clj->json-node)]
-        (when-let [errors (schema/validate! schema
-                                            body-schema
-                                            body
-                                            opts)]
+        (when-let [errors (schema/validate schema
+                                           body-schema
+                                           body
+                                           opts)]
           (throw (ex-info "Invalid Response Body"
                           {:type :s-exp.legba.response/invalid-body
                            :schema body-schema
@@ -39,8 +38,7 @@
           (assoc :body (json/json-node->str body))))
       (throw (ex-info "Invalid response content-type"
                       {:type :s-exp.legba.response/invalid-content-type
-                       :schema ct-schema
-                       :message "Invalid Response Content-Type"})))))
+                       :schema ct-schema})))))
 
 (defn validate-response-headers
   "Performs validation of response headers"
@@ -50,9 +48,9 @@
                                 (some-> sub-schema (get-in ["responses" "default" "headers"])))]
     (doseq [[header-name header-schema] headers-schema
             :let [header-val (get-in response [:headers header-name])]]
-      (when-let [errors (schema/validate! schema header-schema
-                                          (pr-str header-val)
-                                          opts)]
+      (when-let [errors (schema/validate schema header-schema
+                                         (pr-str header-val)
+                                         opts)]
         (throw (ex-info (format "Invalid Response Header: %s:%s"
                                 header-name
                                 header-val)

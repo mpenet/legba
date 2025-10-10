@@ -38,12 +38,13 @@
                   _ (when (and required (= :s-exp.legba.request/missing param-val))
                       (throw (ex-info "Missing Required Query Parameter"
                                       {:type :s-exp.legba.request/missing-query-parameter
+                                       :errors [{:pointer (-> query-schema meta :json-pointer)
+                                                 :detail "required query parameter missing"}]
                                        :schema query-schema})))]]
-
-      (when-let [errors (schema/validate! schema
-                                          (get query-schema "schema")
-                                          (pr-str (or param-val ""))
-                                          opts)]
+      (when-let [errors (schema/validate schema
+                                         (get query-schema "schema")
+                                         (pr-str (or param-val ""))
+                                         opts)]
         (throw (ex-info "Invalid Query Parameters"
                         {:type :s-exp.legba.request/invalid-query-parameters
                          :schema m-query-params
@@ -60,11 +61,13 @@
                   _ (when (and required (= :s-exp.legba.request/missing param-val))
                       (throw (ex-info "Missing Required Cookie Parameter"
                                       {:type :s-exp.legba.request/missing-cookie-parameter
+                                       :errors [{:pointer (-> cookie-schema meta :json-pointer)
+                                                 :detail "required cookie parameter missing"}]
                                        :schema cookie-schema})))]]
-      (when-let [errors (schema/validate! schema
-                                          (get cookie-schema "schema")
-                                          (pr-str (or param-val ""))
-                                          opts)]
+      (when-let [errors (schema/validate schema
+                                         (get cookie-schema "schema")
+                                         (pr-str (or param-val ""))
+                                         opts)]
         (throw (ex-info "Invalid Cookie Parameters"
                         {:type :s-exp.legba.request/invalid-cookie-parameters
                          :schema m-cookie-params
@@ -77,10 +80,10 @@
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[schema-key param-schema] m-path-params
             :let [param-val (get-in request [path-params-key schema-key])]]
-      (when-let [errors (schema/validate! schema
-                                          (get param-schema "schema")
-                                          (pr-str param-val)
-                                          opts)]
+      (when-let [errors (schema/validate schema
+                                         (get param-schema "schema")
+                                         (pr-str param-val)
+                                         opts)]
         (throw (ex-info "Invalid Path Parameters"
                         {:type :s-exp.legba.request/invalid-path-parameters
                          :schema m-path-params
@@ -102,10 +105,10 @@
                 body (if json-body
                        (-> body slurp json/str->json-node)
                        body)]
-            (when-let [errors (schema/validate! schema
-                                                body-schema
-                                                body
-                                                opts)]
+            (when-let [errors (schema/validate schema
+                                               body-schema
+                                               body
+                                               opts)]
               (throw (ex-info "Invalid Request Body"
                               {:type :s-exp.legba.request/invalid-body
                                :schema body-schema
@@ -113,10 +116,11 @@
             (cond-> request
               json-body
               (assoc :body (json/json-node->clj body opts))))
-          (throw (ex-info "No matching content-type in schema for request"
+          (throw (ex-info "Invalid content type for request"
                           {:type :s-exp.legba.request/invalid-content-type
-                           :schema req-body-schema
-                           :message "Invalid content type for request"}))))
+                           :errors [{:pointer (-> req-body-schema meta :json-pointer)
+                                     :detail "No matching content-type"}]
+                           :schema req-body-schema}))))
       request)))
 
 (defn validate
