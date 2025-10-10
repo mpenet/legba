@@ -68,18 +68,18 @@
                 ^SchemaValidatorsConfig schema-validator-config)))
 
 (defn validation-result
-  "Extracts validation errors from a ValidationResult object.
+  "Extracts and formats schema validation errors from a ValidationResult object.
 
-  Arguments:
-    - `r` (ValidationResult): The result object returned by a validation call.
+  Takes a NetworkNT ValidationResult and returns a vector of error maps,
+  where each map contains:
+    - :path     (string)   JSON path of the error location
+    - :pointer  (string)   JSON pointer to the schema fragment
+    - :location (string)   Instance location in the JSON document
+    - :detail   (string)   Validation error message/detail
 
-  Returns:
-    A sequence of maps, one for each validation error, containing:
-    - `:type`: Error type string from validation
-    - `:path`: JSON path to offending element
-    - `:error`: Error code string
-    - `:message`: Human-friendly error message
-    Returns `nil` if the validation result contains no errors."
+  Returns nil if there are no errors. Useful for turning validator output into
+  a more consumable shape for clients, APIs, or error reporting."
+
   [^ValidationResult r]
   (let [vms (.getValidationMessages r)]
     (when-not (empty? vms)

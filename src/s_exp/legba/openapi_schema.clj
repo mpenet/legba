@@ -10,9 +10,7 @@
                                  InputFormat
                                  OutputFormat
                                  SchemaLocation)
-           (com.networknt.schema ValidationResult
-                                 ValidationMessage
-                                 SpecVersion$VersionFlag
+           (com.networknt.schema SpecVersion$VersionFlag
                                  PathType)
            (com.networknt.schema.oas OpenApi31)))
 
@@ -59,7 +57,7 @@
      :schema-uri schema-uri
      :json-schema-factory schema-factory}))
 
-(defn validate!
+(defn validate
   "Validates a `val` against `schema`"
   [{:as _schema :keys [schema-uri json-schema-factory]}
    sub-schema val

@@ -24,10 +24,10 @@
             ;; if we have a json-body we convert it to jsonnode for validation
             ;; and later returning handler value
             body (cond-> body json-body json/clj->json-node)]
-        (when-let [errors (schema/validate! schema
-                                            body-schema
-                                            body
-                                            opts)]
+        (when-let [errors (schema/validate schema
+                                           body-schema
+                                           body
+                                           opts)]
           (throw (ex-info "Invalid Response Body"
                           {:type :s-exp.legba.response/invalid-body
                            :schema body-schema
@@ -48,9 +48,9 @@
                                 (some-> sub-schema (get-in ["responses" "default" "headers"])))]
     (doseq [[header-name header-schema] headers-schema
             :let [header-val (get-in response [:headers header-name])]]
-      (when-let [errors (schema/validate! schema header-schema
-                                          (pr-str header-val)
-                                          opts)]
+      (when-let [errors (schema/validate schema header-schema
+                                         (pr-str header-val)
+                                         opts)]
         (throw (ex-info (format "Invalid Response Header: %s:%s"
                                 header-name
                                 header-val)

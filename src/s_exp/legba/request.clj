@@ -41,10 +41,10 @@
                                        :errors [{:pointer (-> query-schema meta :json-pointer)
                                                  :detail "required query parameter missing"}]
                                        :schema query-schema})))]]
-      (when-let [errors (schema/validate! schema
-                                          (get query-schema "schema")
-                                          (pr-str (or param-val ""))
-                                          opts)]
+      (when-let [errors (schema/validate schema
+                                         (get query-schema "schema")
+                                         (pr-str (or param-val ""))
+                                         opts)]
         (throw (ex-info "Invalid Query Parameters"
                         {:type :s-exp.legba.request/invalid-query-parameters
                          :schema m-query-params
@@ -64,10 +64,10 @@
                                        :errors [{:pointer (-> cookie-schema meta :json-pointer)
                                                  :detail "required cookie parameter missing"}]
                                        :schema cookie-schema})))]]
-      (when-let [errors (schema/validate! schema
-                                          (get cookie-schema "schema")
-                                          (pr-str (or param-val ""))
-                                          opts)]
+      (when-let [errors (schema/validate schema
+                                         (get cookie-schema "schema")
+                                         (pr-str (or param-val ""))
+                                         opts)]
         (throw (ex-info "Invalid Cookie Parameters"
                         {:type :s-exp.legba.request/invalid-cookie-parameters
                          :schema m-cookie-params
@@ -80,10 +80,10 @@
   (when-let [m-path-params (path-params-schema sub-schema)]
     (doseq [[schema-key param-schema] m-path-params
             :let [param-val (get-in request [path-params-key schema-key])]]
-      (when-let [errors (schema/validate! schema
-                                          (get param-schema "schema")
-                                          (pr-str param-val)
-                                          opts)]
+      (when-let [errors (schema/validate schema
+                                         (get param-schema "schema")
+                                         (pr-str param-val)
+                                         opts)]
         (throw (ex-info "Invalid Path Parameters"
                         {:type :s-exp.legba.request/invalid-path-parameters
                          :schema m-path-params
@@ -105,10 +105,10 @@
                 body (if json-body
                        (-> body slurp json/str->json-node)
                        body)]
-            (when-let [errors (schema/validate! schema
-                                                body-schema
-                                                body
-                                                opts)]
+            (when-let [errors (schema/validate schema
+                                               body-schema
+                                               body
+                                               opts)]
               (throw (ex-info "Invalid Request Body"
                               {:type :s-exp.legba.request/invalid-body
                                :schema body-schema
