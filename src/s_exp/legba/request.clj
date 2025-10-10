@@ -38,6 +38,8 @@
                   _ (when (and required (= :s-exp.legba.request/missing param-val))
                       (throw (ex-info "Missing Required Query Parameter"
                                       {:type :s-exp.legba.request/missing-query-parameter
+                                       :errors [{:pointer (-> query-schema meta :json-pointer)
+                                                 :detail "required query parameter missing"}]
                                        :schema query-schema})))]]
       (when-let [errors (schema/validate! schema
                                           (get query-schema "schema")
@@ -59,6 +61,8 @@
                   _ (when (and required (= :s-exp.legba.request/missing param-val))
                       (throw (ex-info "Missing Required Cookie Parameter"
                                       {:type :s-exp.legba.request/missing-cookie-parameter
+                                       :errors [{:pointer (-> cookie-schema meta :json-pointer)
+                                                 :detail "required cookie parameter missing"}]
                                        :schema cookie-schema})))]]
       (when-let [errors (schema/validate! schema
                                           (get cookie-schema "schema")

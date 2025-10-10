@@ -87,6 +87,7 @@
             (map (fn [^ValidationMessage m]
                    {:path (.toString (.getEvaluationPath m))
                     :pointer (str "#" (.getFragment (.getSchemaLocation m)))
+                    :location (.toString (.getInstanceLocation m))
                     :detail (.getError m)}))
             vms))))
 
