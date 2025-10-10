@@ -65,7 +65,7 @@
   (let [h (make-handler {} {:include-error-schema false})]
     (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
     (is (= {:status 400,
-            :content-type "application/json",
+            :headers {"Content-Type" "application/problem+json"},
             :body
             {"errors"
              [{"detail" "does not match the uuid pattern must be a valid RFC 4122 UUID",
@@ -85,7 +85,7 @@
                         :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))))
 
     (is (= {:status 400,
-            :content-type "application/json",
+            :headers {"Content-Type" "application/problem+json"},
             :body {"errors"
                    [{"detail" "No matching content-type",
                      "pointer" "/paths/~1items/post/requestBody"}],
@@ -98,7 +98,7 @@
                 :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))))
 
     (is (= {:status 400,
-            :content-type "application/json",
+            :headers {"Content-Type" "application/problem+json"},
             :body {"errors"
                    [{"detail" "No matching content-type",
                      "pointer" "/paths/~1items/post/requestBody"}],
@@ -111,7 +111,7 @@
                 :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))))
 
     (is (= {:status 400,
-            :content-type "application/json",
+            :headers {"Content-Type" "application/problem+json"},
             :body {"title" "Missing Required Query Parameter",
                    "type" "request:missing-query-parameter"
                    "errors" [{"detail" "required query parameter missing",

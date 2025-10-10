@@ -55,7 +55,7 @@
   (let [data (ex-data e)
         type' (ex->rfc9457-type e)]
     {:status 400
-     :content-type "application/json"
+     :headers {"Content-Type" "application/problem+json"}
      :body (json/write-value-as-string
             (cond-> data
               (not include-error-schema)
