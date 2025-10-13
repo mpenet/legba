@@ -150,7 +150,10 @@ There's also an extra argument with options:
   Defaults to `:path-params`
   
 * `soft-response-validation` - boolean, if true response validation doesn't
-  throw and assocs the error on the ring response as response-validation-error.  
+  throw and assocs the error on the ring response as response-validation-error.
+  
+* `rfc9457-type-fn` - defaults to `s-exp.legba.middleware/ex->rfc9457-type` -
+  return rfc9457 error type to be used in json+problem payloads from an exception.
   
 ### Notes
 

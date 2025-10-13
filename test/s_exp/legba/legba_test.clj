@@ -73,7 +73,7 @@
                "pointer" "#/paths/~1item~1{itemId}/get/parameters/0/schema/format",
                "location" "$"}],
              "title" "Invalid Path Parameters",
-             "type" "request:invalid-path-parameters"}}
+             "type" "#/http-problem-types/request-invalid-path-parameters"}}
            (read-body-as-edn (h {:request-method :get :uri "/item/ab"}))))
 
     (is (string? (:body (h {:request-method :get :uri (str "/item/" item-id)}))))
@@ -90,7 +90,7 @@
                    [{"detail" "No matching content-type",
                      "pointer" "/paths/~1items/post/requestBody"}],
                    "title" "Invalid content type for request",
-                   "type" "request:invalid-content-type"}}
+                   "type" "#/http-problem-types/request-invalid-content-type"}}
            (read-body-as-edn
             (h {:request-method :post
                 :headers {"content-type" "application/boom"}
@@ -103,7 +103,7 @@
                    [{"detail" "No matching content-type",
                      "pointer" "/paths/~1items/post/requestBody"}],
                    "title" "Invalid content type for request",
-                   "type" "request:invalid-content-type"}}
+                   "type" "#/http-problem-types/request-invalid-content-type"}}
            (read-body-as-edn
             (h {:request-method :post
                 :headers {"content-type" "application/boom"}
@@ -113,7 +113,7 @@
     (is (= {:status 400,
             :headers {"Content-Type" "application/problem+json"},
             :body {"title" "Missing Required Query Parameter",
-                   "type" "request:missing-query-parameter"
+                   "type" "#/http-problem-types/request-missing-query-parameter"
                    "errors" [{"detail" "required query parameter missing",
                               "pointer" "/paths/~1search/get/parameters/0"}]}}
            (read-body-as-edn
@@ -143,7 +143,7 @@
               "path" "$.paths['/items'].post.responses['201'].content['application/json'].schema.properties.value.type",
               "pointer" "#/paths/~1items/post/responses/201/content/application~1json/schema/properties/value/type"}],
             "title" "Invalid Response Body",
-            "type" "response:invalid-body"}
+            "type" "#/http-problem-types/response-invalid-body"}
            body))))
 
 (deftest response-test
@@ -158,7 +158,7 @@
     (is (= status 400))
 
     (is (= {"title" "Invalid response format for status",
-            "type" "response:invalid-format-for-status"}
+            "type" "#/http-problem-types/response-invalid-format-for-status"}
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
@@ -179,7 +179,7 @@
               "#/paths/~1items/post/responses/201/content/application~1json/schema/type"
               "location" "$"}],
             "title" "Invalid Response Body",
-            "type" "response:invalid-body"}
+            "type" "#/http-problem-types/response-invalid-body"}
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/xx"}
@@ -193,7 +193,7 @@
              :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
     (is (= 400 status))
     (is (= {"title" "Invalid response content-type",
-            "type" "response:invalid-content-type"}
+            "type" "#/http-problem-types/response-invalid-content-type"}
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/xx"}
@@ -216,7 +216,7 @@
                 "type" "object"}}},
              "description" "Item created successfully."},
             "title" "Invalid response content-type",
-            "type" "response:invalid-content-type"}
+            "type" "#/http-problem-types/response-invalid-content-type"}
            body)) "test schema is included in output")
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}

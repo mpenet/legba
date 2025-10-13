@@ -39,7 +39,7 @@
 (defmethod ex->rfc9457-type :default
   [ex]
   (when-let [t (ex/ex-type ex)]
-    (format "%s:%s"
+    (format "#/http-problem-types/%s-%s"
             (keyword->rfc9457-type t)
             (name t))))
 
@@ -50,10 +50,11 @@
 (defmethod ex->response
   :s-exp.legba/invalid
   [e {:as _opts
-      :keys [include-error-schema]
-      :or {include-error-schema true}}]
+      :keys [include-error-schema rfc9457-type-fn]
+      :or {include-error-schema true
+           rfc9457-type-fn ex->rfc9457-type}}]
   (let [data (ex-data e)
-        type' (ex->rfc9457-type e)]
+        type' (rfc9457-type-fn e)]
     {:status 400
      :headers {"Content-Type" "application/problem+json"}
      :body (json/write-value-as-string
