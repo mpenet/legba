@@ -52,7 +52,7 @@
     {:status 400
      :headers {"Content-Type" "application/problem+json"}
      :body (json/write-value-as-string
-            (cond-> data
+            (cond-> (dissoc data :response)
               (not include-error-schema)
               (dissoc :schema)
               type'
