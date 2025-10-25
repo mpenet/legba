@@ -42,7 +42,6 @@
     `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
     to `s-exp.legba.openapi-schema/validation-result`
 
-  * `soft-response-validation` - boolean, if true response validation doesn't
   throw and assocs the error on the ring response as response-validation-error."
   [routes schema & {:as opts}]
   (let [opts (merge default-options opts)]
@@ -81,7 +80,6 @@
 
   * `:extra-routes` - extra routes to be passed to the underlying router
 
-  * `soft-response-validation` - boolean, if true response validation doesn't
   throw and assocs the error on the ring response as response-validation-error.  "
   [routes schema & {:as opts
                     :keys [path-params-key]}]

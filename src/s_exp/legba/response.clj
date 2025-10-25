@@ -18,7 +18,8 @@
     (when-not ct-schema
       (throw (ex-info "Invalid response format for status"
                       {:type :s-exp.legba.response/invalid-format-for-status
-                       :schema sub-schema})))
+                       :schema sub-schema
+                       :response response})))
     (if-let [body-schema (mime-type/match-schema-mime-type ct-schema content-type)]
       (let [json-body (json/json-content-type? content-type)
             ;; if we have a json-body we convert it to jsonnode for validation
@@ -31,14 +32,16 @@
           (throw (ex-info "Invalid Response Body"
                           {:type :s-exp.legba.response/invalid-body
                            :schema body-schema
-                           :errors errors})))
+                           :errors errors
+                           :response response})))
         ;; we converted the body, turn it into a string for the response
         (cond-> response
           json-body
           (assoc :body (json/json-node->str body))))
       (throw (ex-info "Invalid response content-type"
                       {:type :s-exp.legba.response/invalid-content-type
-                       :schema ct-schema})))))
+                       :schema ct-schema
+                       :response response})))))
 
 (defn validate-response-headers
   "Performs validation of response headers"
@@ -56,7 +59,8 @@
                                 header-val)
                         {:type :s-exp.legba.response/invalid-header
                          :schema headers-schema
-                         :errors errors})))))
+                         :errors errors
+                         :response response})))))
   response)
 
 (defn validate
@@ -69,7 +73,9 @@
 ;; Derive our own sub-types, the error middleware will catch on
 ;; `:s-exp.legba/invalid` and we later dispath on error response multimethod,
 ;; `s-exp.legba.middleware/ex->response`, with the leaf types
-(run! #(ex/derive % :s-exp.legba/invalid)
-      [:s-exp.legba.response/invalid-header :s-exp.legba.response/invalid-body
+(run! #(ex/derive % :s-exp.legba.response/invalid)
+      [:s-exp.legba.response/invalid-header
+       :s-exp.legba.response/invalid-body
        :s-exp.legba.response/invalid-format-for-status
        :s-exp.legba.response/invalid-content-type])
+(ex/derive :s-exp.legba.response/invalid :s-exp.legba/invalid)

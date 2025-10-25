@@ -135,12 +135,12 @@
 ;; Derive our own sub-types, the error middleware will catch on
 ;; `:s-exp.legba/invalid` and we later dispath on error response multimethod,
 ;; `s-exp.legba.middleware/ex->response`, with the leaf types
-(run! #(ex/derive % :s-exp.legba/invalid)
-      [:s-exp.legba.request/invalid
-       :s-exp.legba.request/invalid-body
+(run! #(ex/derive % :s-exp.legba.request/invalid)
+      [:s-exp.legba.request/invalid-body
        :s-exp.legba.request/invalid-path-parameters
        :s-exp.legba.request/invalid-query-parameters
        :s-exp.legba.request/invalid-cookie-parameters
        :s-exp.legba.request/invalid-content-type
        :s-exp.legba.request/missing-cookie-parameter
        :s-exp.legba.request/missing-query-parameter])
+(ex/derive :s-exp.legba.request/invalid :s-exp.legba/invalid)

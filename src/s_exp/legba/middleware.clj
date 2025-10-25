@@ -8,8 +8,7 @@
 (defn wrap-validation
   "Takes a regular RING handler returns a handler that will apply openapi
   validation from the supplied `schema` for a given `method` and `path`"
-  [handler schema method path {:as opts
-                               :keys [soft-response-validation]}]
+  [handler schema method path {:as opts}]
   (let [sub-schema (get-in schema [:openapi-schema "paths" path (name method)])]
     (-> (fn [request]
           (let [request (request/validate
@@ -18,12 +17,7 @@
                          sub-schema
                          opts)
                 response (handler request)]
-            (if soft-response-validation
-              (try
-                (response/validate response schema sub-schema opts)
-                (catch Exception e
-                  (assoc response :response-validation-error e)))
-              (response/validate response schema sub-schema opts))))
+            (response/validate response schema sub-schema opts)))
         (vary-meta assoc
                    :schema schema
                    :sub-schema sub-schema))))
@@ -67,7 +61,7 @@
               (assoc :title (ex-message e))))}))
 
 (defn wrap-error-response-fn
-  [handler req opts]
+  [handler req {:as opts}]
   (ex/try+
     (handler req)
     #_{:clj-kondo/ignore [:unresolved-symbol]}

@@ -217,20 +217,7 @@
              "description" "Item created successfully."},
             "title" "Invalid response content-type",
             "type" "#/http-problem-types/response-invalid-content-type"}
-           body)) "test schema is included in output")
-
-  (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
-                                               :status 201}}
-                        {:soft-response-validation true
-                         :include-error-schema false})
-        {:as _r :keys [status]}
-        (read-body-as-edn
-         (h {:request-method :post
-             :headers {"content-type" "application/json"}
-             :uri "/items"
-             :body (input-stream "{\"name\": \"asdf\", \"value\":1}")}))]
-    (is (= status 201)
-        "even tho response body is not correct, validation let it through")))
+           body)) "test schema is included in output"))
 
 (deftest json-pointer-test
   ;; Taken from https://datatracker.ietf.org/doc/html/rfc6901
