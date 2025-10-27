@@ -114,7 +114,7 @@
                                :schema body-schema
                                :errors errors})))
             (cond-> request
-              json-body
+              (and json-body (:read-request-json-body opts))
               (assoc :body (json/json-node->clj body opts))))
           (throw (ex-info "Invalid content type for request"
                           {:type :s-exp.legba.request/invalid-content-type

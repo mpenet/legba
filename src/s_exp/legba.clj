@@ -11,7 +11,9 @@
   {:not-found-response {:status 404 :body "Not found"}
    :key-fn keyword
    :query-string-params-key :query-params
-   :path-params-key :path-params})
+   :path-params-key :path-params
+   :write-response-json-body true
+   :read-request-json-body true})
 
 (defn- ensure-handler-coverage!
   "Checks that a map of openapi-handlers covers all paths defined by the schema"

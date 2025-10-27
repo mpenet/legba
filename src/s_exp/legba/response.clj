@@ -21,10 +21,15 @@
                        :schema sub-schema
                        :response response})))
     (if-let [body-schema (mime-type/match-schema-mime-type ct-schema content-type)]
-      (let [json-body (json/json-content-type? content-type)
-            ;; if we have a json-body we convert it to jsonnode for validation
-            ;; and later returning handler value
-            body (cond-> body json-body json/clj->json-node)]
+      (let [;; if we have a json-body we convert it to jsonnode for validation
+            json-body (json/json-content-type? content-type)
+            body (cond-> body
+                   json-body
+                   json/clj->json-node)
+            ;; we can convert already, either we output in error, or response
+            response (cond-> response
+                       (and json-body (:write-response-json-body opts))
+                       (assoc :body (json/json-node->str body)))]
         (when-let [errors (schema/validate schema
                                            body-schema
                                            body
@@ -34,10 +39,7 @@
                            :schema body-schema
                            :errors errors
                            :response response})))
-        ;; we converted the body, turn it into a string for the response
-        (cond-> response
-          json-body
-          (assoc :body (json/json-node->str body))))
+        response)
       (throw (ex-info "Invalid response content-type"
                       {:type :s-exp.legba.response/invalid-content-type
                        :schema ct-schema
