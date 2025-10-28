@@ -15,7 +15,7 @@
    :write-response-json-body true
    :read-request-json-body true})
 
-(defn- ensure-handler-coverage!
+(defn ensure-handler-coverage!
   "Checks that a map of openapi-handlers covers all paths defined by the schema"
   [openapi-handlers {:as _schema :keys [openapi-schema]}]
   (let [missing-handlers
