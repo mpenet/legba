@@ -69,7 +69,7 @@
             :body
             {"errors"
              [{"detail" "does not match the uuid pattern must be a valid RFC 4122 UUID",
-               "path" "$.paths['/item/{itemId}'].get.parameters[0].schema.format",
+               "path" "$.format",
                "pointer" "#/paths/~1item~1{itemId}/get/parameters/0/schema/format",
                "location" "$"}],
              "title" "Invalid Path Parameters",
@@ -140,7 +140,7 @@
     (is (= {"errors"
             [{"detail" "string found, number expected",
               "location" "$.value",
-              "path" "$.paths['/items'].post.responses['201'].content['application/json'].schema.properties.value.type",
+              "path" "$.properties.value.type",
               "pointer" "#/paths/~1items/post/responses/201/content/application~1json/schema/properties/value/type"}],
             "title" "Invalid Response Body",
             "type" "#/http-problem-types/response-invalid-body"}
@@ -173,10 +173,8 @@
     (is (= status 400))
     (is (= {"errors"
             [{"detail" "null found, object expected",
-              "path"
-              "$.paths['/items'].post.responses['201'].content['application/json'].schema.type",
-              "pointer"
-              "#/paths/~1items/post/responses/201/content/application~1json/schema/type"
+              "path" "$.type",
+              "pointer" "#/paths/~1items/post/responses/201/content/application~1json/schema/type"
               "location" "$"}],
             "title" "Invalid Response Body",
             "type" "#/http-problem-types/response-invalid-body"}

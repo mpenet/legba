@@ -145,7 +145,6 @@ There's also an extra argument with options:
   
 * `:extra-routes` - extra routes to be passed to the underlying router
 
-
 * `:path-params-key` - where to locate the routing extracted path parameters -
   Defaults to `:path-params`
   

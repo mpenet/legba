@@ -28,6 +28,7 @@
     (when (seq missing-handlers)
       (ex/ex-incorrect! (format "Missing handlers for %s"
                                 (str/join ", " missing-handlers))))))
+
 (defn handlers
   "From a map of [method path] -> ring handler returns a map of [method path] ->
   openapi-wrapped-handler.
