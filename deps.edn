@@ -13,7 +13,7 @@
         com.networknt/json-schema-validator {:mvn/version "2.0.0"}
         com.jayway.jsonpath/json-path {:mvn/version "2.9.0"}
         ring/ring-core {:mvn/version "1.15.3"}
-        com.s-exp/appia {:mvn/version "1.0.0-alpha5"}}
+        com.s-exp/appia {:mvn/version "1.0.0-alpha7"}}
  :aliases
  {:test
   {:extra-deps {legba/test-runner {:local/root "dev"}
