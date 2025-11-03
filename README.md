@@ -49,6 +49,11 @@ Legba ensures that the final OpenAPI file exposed to your users remains
 * Works with both **JSON and YAML OpenAPI schemas**
 
 
+Note: 
+
+/!\ While already good enough for production I reserve myself the right to break
+backward compatibly until I strip the alpha tag from the released version. 
+
 ## How does it work
 
 You can either:
