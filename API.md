@@ -446,14 +446,14 @@ Extracts and formats schema validation errors from a ValidationResult object.
 
 Wraps handler with error checking middleware that will transform validation
   Exceptions to equivalent http response, as infered per [`ex->response`](#s-exp.legba.middleware/ex->response)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L78-L83">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L77-L82">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-error-response-fn">`wrap-error-response-fn`</a><a name="s-exp.legba.middleware/wrap-error-response-fn"></a>
 ``` clojure
 
 (wrap-error-response-fn handler req {:as opts})
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L69-L76">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L68-L75">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-validation">`wrap-validation`</a><a name="s-exp.legba.middleware/wrap-validation"></a>
 ``` clojure

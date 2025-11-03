@@ -62,7 +62,7 @@
   (update response :body jsonista/read-value))
 
 (deftest requests-test
-  (let [h (make-handler {} {:include-error-schema false})]
+  (let [h (make-handler {} {})]
     (is (= 404 (:status (h {:request-method :get :uri "/yolo"}))))
     (is (= {:status 400,
             :headers {"Content-Type" "application/problem+json"},
@@ -128,7 +128,7 @@
                                                       :id item-id
                                                       :value ""}
                                                :status 201}}
-                        {:include-error-schema false})
+                        {})
         {:as _r :keys [status body]}
         (read-body-as-edn
          (h {:request-method :post
@@ -148,7 +148,7 @@
 
 (deftest response-test
   (let [h (make-handler {:post-items-response {}}
-                        {:include-error-schema false})
+                        {})
         {:as _r :keys [status body]}
         (read-body-as-edn
          (h {:request-method :post
@@ -163,7 +163,7 @@
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/json"}
                                                :status 201}}
-                        {:include-error-schema false})
+                        {})
         {:as _r :keys [status body]}
         (read-body-as-edn
          (h {:request-method :post
@@ -182,7 +182,7 @@
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/xx"}
                                                :status 201}}
-                        {:include-error-schema false})
+                        {})
         {:as _r :keys [status body]}
         (read-body-as-edn
          (h {:request-method :post
@@ -195,7 +195,8 @@
            body)))
 
   (let [h (make-handler {:post-items-response {:headers {"content-type" "application/xx"}
-                                               :status 201}})
+                                               :status 201}}
+                        {:include-error-schema true})
         {:as _r :keys [status body]}
         (read-body-as-edn
          (h {:request-method :post

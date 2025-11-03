@@ -51,8 +51,7 @@
   :s-exp.legba/invalid
   [e {:as _opts
       :keys [include-error-schema rfc9457-type-fn]
-      :or {include-error-schema true
-           rfc9457-type-fn ex->rfc9457-type}}]
+      :or {rfc9457-type-fn ex->rfc9457-type}}]
   (let [data (ex-data e)
         type' (rfc9457-type-fn e)]
     {:status 400

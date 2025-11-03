@@ -158,6 +158,8 @@ There's also an extra argument with options:
 
 * `:include-schema` - if true includes path relevant schema portion to request map
 
+* `:include-error-schema` - if true includes relevant schema portion with error response
+
 ### Notes
 
 * You don't have to do any JSON marshaling, if the content-type is of
