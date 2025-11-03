@@ -6,9 +6,12 @@
             [s-exp.legba.response :as response]))
 
 (defn wrap-validation
-  "Takes a regular RING handler returns a handler that will apply openapi
-  validation from the supplied `schema` for a given `method` and `path`"
-  [handler schema method path {:as opts}]
+  "Middleware that wraps a standard RING handler with OpenAPI request and response validation.
+  Validates both the incoming request and outgoing response according to the
+  provided `schema`, for the specified HTTP `method` and `path`. Additional
+  options:, such as including the validation schema with each
+  request (`include-schema`)."
+  [handler schema method path {:as opts :keys [include-schema]}]
   (let [sub-schema (get-in schema [:openapi-schema "paths" path (name method)])]
     (-> (fn [request]
           (let [request (request/validate
@@ -16,6 +19,9 @@
                          schema
                          sub-schema
                          opts)
+                request (cond-> request
+                          include-schema
+                          (assoc :s-exp.legba/schema sub-schema))
                 response (handler request)]
             (response/validate response schema sub-schema opts)))
         (vary-meta assoc

@@ -32,7 +32,7 @@
     -  [`ex->rfc9457-type`](#s-exp.legba.middleware/ex->rfc9457-type)
     -  [`wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) - Wraps handler with error checking middleware that will transform validation Exceptions to equivalent http response, as infered per <code>ex-&gt;response</code>.
     -  [`wrap-error-response-fn`](#s-exp.legba.middleware/wrap-error-response-fn)
-    -  [`wrap-validation`](#s-exp.legba.middleware/wrap-validation) - Takes a regular RING handler returns a handler that will apply openapi validation from the supplied <code>schema</code> for a given <code>method</code> and <code>path</code>.
+    -  [`wrap-validation`](#s-exp.legba.middleware/wrap-validation) - Middleware that wraps a standard RING handler with OpenAPI request and response validation.
 -  [`s-exp.legba.mime-type`](#s-exp.legba.mime-type) 
     -  [`match-mime-type?`](#s-exp.legba.mime-type/match-mime-type?)
     -  [`match-schema-mime-type`](#s-exp.legba.mime-type/match-schema-mime-type) - Matches <code>content-type</code> with <code>schema</code>, return resulting <code>sub-schema</code>.
@@ -104,11 +104,12 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
      parameters - defaults to `:query-params`
 
   * `:validation-result` - function that controls how to turn
-    `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
-    to `s-exp.legba.openapi-schema/validation-result`
+  `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+  to `s-exp.legba.openapi-schema/validation-result`
 
-  throw and assocs the error on the ring response as response-validation-error.
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L32-L62">Source</a></sub></p>
+  * `:include-schema`: - adds the path-relevant schema portion to the
+  request-map under `:s-exp.legba/schema` (`false` by default)
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L32-L63">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler">`routing-handler`</a><a name="s-exp.legba/routing-handler"></a>
 ``` clojure
@@ -119,7 +120,7 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 Same as [`routing-handler*`](#s-exp.legba/routing-handler*) but wraps with
   [`s-exp.legba.middleware/wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) middleware turning exceptions
   into nicely formatted error responses
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L103-L112">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L104-L113">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler*">`routing-handler*`</a><a name="s-exp.legba/routing-handler*"></a>
 ``` clojure
@@ -149,7 +150,7 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
   * `:extra-routes` - extra routes to be passed to the underlying router
 
   throw and assocs the error on the ring response as response-validation-error.  
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L64-L101">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L65-L102">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.json">s-exp.legba.json</a>
@@ -429,13 +430,13 @@ Extracts and formats schema validation errors from a ValidationResult object.
 
 
 
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L40-L42">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L46-L48">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/ex->rfc9457-type">`ex->rfc9457-type`</a><a name="s-exp.legba.middleware/ex->rfc9457-type"></a>
 
 
 
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L25-L26">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L31-L32">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-error-response">`wrap-error-response`</a><a name="s-exp.legba.middleware/wrap-error-response"></a>
 ``` clojure
@@ -445,24 +446,27 @@ Extracts and formats schema validation errors from a ValidationResult object.
 
 Wraps handler with error checking middleware that will transform validation
   Exceptions to equivalent http response, as infered per [`ex->response`](#s-exp.legba.middleware/ex->response)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L72-L77">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L78-L83">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-error-response-fn">`wrap-error-response-fn`</a><a name="s-exp.legba.middleware/wrap-error-response-fn"></a>
 ``` clojure
 
 (wrap-error-response-fn handler req {:as opts})
 ```
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L63-L70">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L69-L76">Source</a></sub></p>
 
 ## <a name="s-exp.legba.middleware/wrap-validation">`wrap-validation`</a><a name="s-exp.legba.middleware/wrap-validation"></a>
 ``` clojure
 
-(wrap-validation handler schema method path {:as opts})
+(wrap-validation handler schema method path {:as opts, :keys [include-schema]})
 ```
 
-Takes a regular RING handler returns a handler that will apply openapi
-  validation from the supplied `schema` for a given `method` and `path`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L8-L23">Source</a></sub></p>
+Middleware that wraps a standard RING handler with OpenAPI request and response validation.
+  Validates both the incoming request and outgoing response according to the
+  provided `schema`, for the specified HTTP `method` and `path`. Additional
+  options:, such as including the validation schema with each
+  request (`include-schema`).
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/middleware.clj#L8-L29">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.mime-type">s-exp.legba.mime-type</a>

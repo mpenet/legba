@@ -42,10 +42,11 @@
      parameters - defaults to `:query-params`
 
   * `:validation-result` - function that controls how to turn
-    `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
-    to `s-exp.legba.openapi-schema/validation-result`
+  `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+  to `s-exp.legba.openapi-schema/validation-result`
 
-  throw and assocs the error on the ring response as response-validation-error."
+  * `:include-schema`: - adds the path-relevant schema portion to the
+  request-map under `:s-exp.legba/schema` (`false` by default)"
   [routes schema & {:as opts}]
   (let [opts (merge default-options opts)]
     (reduce (-> (fn [m [[method path :as coords] handler]]

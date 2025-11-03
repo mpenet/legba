@@ -148,9 +148,11 @@ There's also an extra argument with options:
 * `:path-params-key` - where to locate the routing extracted path parameters -
   Defaults to `:path-params`
   
-* `rfc9457-type-fn` - defaults to `s-exp.legba.middleware/ex->rfc9457-type` -
+* `:rfc9457-type-fn` - defaults to `s-exp.legba.middleware/ex->rfc9457-type` -
   return rfc9457 error type to be used in json+problem payloads from an exception.
-  
+
+* `:include-schema` - if true includes path relevant schema portion to request map
+
 ### Notes
 
 * You don't have to do any JSON marshaling, if the content-type is of
