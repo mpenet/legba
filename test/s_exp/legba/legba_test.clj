@@ -5,7 +5,8 @@
             [s-exp.legba :as l]
             [s-exp.legba.json :as json]
             [s-exp.legba.json-pointer :as jp]
-            [s-exp.legba.mime-type :as mime-type]))
+            [s-exp.legba.mime-type :as mime-type]
+            [s-exp.legba.openapi-schema :as oas]))
 
 (def item-id (str (random-uuid)))
 
@@ -275,3 +276,7 @@
   (is (not (mime-type/match-mime-type? "foo/*" "foox/bar")))
   (is (not (mime-type/match-mime-type? "foo/bar" "fo/br")))
   (is (not (mime-type/match-mime-type? "foo/bar" "fooo/barr"))))
+
+(deftest broken-schema-load-test
+  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Schema invalid"
+                        (oas/load-schema "classpath://test-broken.json"))))

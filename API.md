@@ -41,6 +41,7 @@
     -  [`load-schema`](#s-exp.legba.openapi-schema/load-schema) - Loads JSON or YAML schema from <code>schema-uri</code> and returns map (of :openapi-schema, :schema-uri, :schema-registry) that contains all the necessary information to perform <code>validate!</code> calls later (minus a JSON pointer).
     -  [`schema-registry-config`](#s-exp.legba.openapi-schema/schema-registry-config) - Default reusable <code>SchemaRegistryConfig</code> instance.
     -  [`validate`](#s-exp.legba.openapi-schema/validate) - Validates a <code>val</code> against <code>schema</code>.
+    -  [`validate-schema!`](#s-exp.legba.openapi-schema/validate-schema!) - Validates a user-provided JSON schema against the OpenAPI 3.1 base schema.
 -  [`s-exp.legba.overlay`](#s-exp.legba.overlay)  - Provides overlay manipulation utilities for OpenAPI schemas, enabling dynamic updates or removals on schema documents using OpenAPI Overlay instructions.
     -  [`apply`](#s-exp.legba.overlay/apply) - Apply overlay actions (update/remove) to the given OpenAPI schema string.
     -  [`conf`](#s-exp.legba.overlay/conf)
@@ -507,19 +508,19 @@ Matches `content-type` with `schema`, return resulting `sub-schema`
 ```
 
 Returns json-schema from schema-registry at `schema-uri`/`json-pointer`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L38-L44">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L76-L82">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/load-schema">`load-schema`</a><a name="s-exp.legba.openapi-schema/load-schema"></a>
 ``` clojure
 
-(load-schema schema-uri)
+(load-schema schema-uri & {:as _opts, :keys [validate-schema], :or {validate-schema true}})
 ```
 
 Loads JSON or YAML schema from `schema-uri` and returns
   map (of :openapi-schema, :schema-uri, :schema-registry) that contains all the
   necessary information to perform `validate!` calls later (minus a JSON
   pointer).
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L46-L65">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L84-L106">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/schema-registry-config">`schema-registry-config`</a><a name="s-exp.legba.openapi-schema/schema-registry-config"></a>
 
@@ -536,7 +537,7 @@ Default reusable `SchemaRegistryConfig` instance.
   - Use `JSON_PATH` for error paths in validation results
 
   This config can be reused for schema load/validation for performance and consistency.
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L19-L36">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L21-L39">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/validate">`validate`</a><a name="s-exp.legba.openapi-schema/validate"></a>
 ``` clojure
@@ -550,7 +551,27 @@ Default reusable `SchemaRegistryConfig` instance.
 ```
 
 Validates a `val` against `schema`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L67-L82">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L108-L123">Source</a></sub></p>
+
+## <a name="s-exp.legba.openapi-schema/validate-schema!">`validate-schema!`</a><a name="s-exp.legba.openapi-schema/validate-schema!"></a>
+``` clojure
+
+(validate-schema! schema-registry schema-uri)
+```
+
+Validates a user-provided JSON schema against the OpenAPI 3.1 base schema.
+
+  Parameters:
+  - schema-registry: An instance of SchemaRegistry containing preloaded schemas.
+  - schema-uri: URI identifying the schema to validate (String).
+
+  Throws:
+  - ex-incorrect! if the provided schema does not conform to the OpenAPI specification.
+  - The exception contains a map of validation errors in :errors.
+
+  This function uses the OpenAPI 3.1 base schema loaded from the local classpath
+  to validate the user schema and reports any problems found in a structured way.
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L41-L74">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.overlay">s-exp.legba.overlay</a>
