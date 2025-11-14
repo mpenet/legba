@@ -7,7 +7,7 @@
 (def lib 'com.s-exp/legba)
 (def version (format "1.0.0-alpha%s" (b/git-count-revs nil)))
 (def class-dir "target/classes")
-(def copy-srcs ["src"])
+(def copy-srcs ["src" "resources"])
 (def target-dir "target")
 (def jar-file (format "%s/%s-%s.jar" target-dir (name lib) version))
 
