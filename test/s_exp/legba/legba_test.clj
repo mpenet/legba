@@ -280,3 +280,6 @@
 (deftest broken-schema-load-test
   (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Schema invalid"
                         (oas/load-schema "classpath://test-broken.json"))))
+
+(deftest path-properties-test
+  (is (fn? (make-handler {:schema-path "classpath://schema/oas/3.1/store-with-path-properties.yaml"}))))
