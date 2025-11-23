@@ -282,4 +282,19 @@
                         (oas/load-schema "classpath://test-broken.json"))))
 
 (deftest path-properties-test
-  (is (fn? (make-handler {:schema-path "classpath://schema/oas/3.1/all-path-properties-and-methods.yaml"}))))
+  (let [routes {[:get "/{id}"] (fn [_] {:status 200
+                                        :body {:status "OK"}})
+                [:put "/{id}"] (fn [_] {:status 200
+                                        :body {:status "OK"}})
+                [:post "/{id}"] (fn [_] {:status 201
+                                         :body {:status "Created"}})
+                [:patch "/{id}"] (fn [_] {:status 200
+                                          :body {:status "OK"}})
+                [:delete "/{id}"] (fn [_] {:status 204})
+                [:head "/{id}"] (fn [_] {:status 200})
+                [:options "/{id}"] (fn [_] {:status 204
+                                            :headers {"Allow" ["GET" "PUT" "POST"
+                                                               "PATCH" "DELETE" "HEAD"
+                                                               "OPTIONS" "TRACE"]}})
+                [:trace "/{id}"] (fn [_] {:status 405})}]
+    (is (fn? (l/routing-handler routes "classpath://schema/oas/3.1/all-path-properties-and-methods.yaml")))))
