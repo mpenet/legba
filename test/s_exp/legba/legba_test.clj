@@ -282,4 +282,4 @@
                         (oas/load-schema "classpath://test-broken.json"))))
 
 (deftest path-properties-test
-  (is (fn? (make-handler {:schema-path "classpath://schema/oas/3.1/store-with-path-properties.yaml"}))))
+  (is (fn? (make-handler {:schema-path "classpath://schema/oas/3.1/all-path-properties-and-methods.yaml"}))))
