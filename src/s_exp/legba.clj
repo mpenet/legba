@@ -21,6 +21,7 @@
   (let [missing-handlers
         (for [[path methods] (get openapi-schema "paths")
               [method & _] methods
+              :when (not (#{"description" "parameters" "servers" "summary"} method))
               :let [method (keyword method)
                     matching-entry (get openapi-handlers [(keyword method) path])]
               :when (not matching-entry)]
