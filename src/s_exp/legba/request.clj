@@ -74,7 +74,7 @@
                          :errors errors})))))
   request)
 
-(defn validate-path-params
+(defn validate-method-params
   "Performs extensive validation of \"path\" \"parameters\""
   [request schema sub-schema {:as opts :keys [path-params-key]}]
   (when-let [m-path-params (path-params-schema sub-schema)]
@@ -88,6 +88,25 @@
                         {:type :s-exp.legba.request/invalid-path-parameters
                          :schema m-path-params
                          :errors errors})))))
+  request)
+
+(defn validate-path-params
+  "Performs extensive validation of \"path\" \"parameters\""
+  [request schema
+   {:as _sub-schema :keys [path-parameters]}
+   {:as opts :keys [path-params-key]}]
+  (when path-parameters
+    (when-let [m-path-params (path-params-schema path-parameters)]
+      (doseq [[schema-key param-schema] m-path-params
+              :let [param-val (get-in request [path-params-key schema-key])]]
+        (when-let [errors (schema/validate schema
+                                           (get param-schema "schema")
+                                           (pr-str param-val)
+                                           opts)]
+          (throw (ex-info "Invalid Path Parameters"
+                          {:type :s-exp.legba.request/invalid-path-parameters
+                           :schema m-path-params
+                           :errors errors}))))))
   request)
 
 (defn validate-body
@@ -128,6 +147,7 @@
   [request schema sub-schema opts]
   (-> request
       (validate-path-params schema sub-schema opts)
+      (validate-method-params schema sub-schema opts)
       (validate-query-params schema sub-schema opts)
       (validate-cookie-params schema sub-schema opts)
       (validate-body schema sub-schema opts)))

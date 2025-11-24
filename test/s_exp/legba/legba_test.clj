@@ -25,7 +25,8 @@
          item-by-id-response
          {:body {:id item-id
                  :name "foo"
-                 :value 1.0}}
+                 :value 1.0}
+          :status 200}
          list-items-response
          {:body
           [{:id item-id
@@ -45,6 +46,8 @@
    & [opts]]
   (l/routing-handler {[:get "/item/{itemId}"]
                       (fn [_request] item-by-id-response)
+                      [:post "/item/{itemId}"]
+                      (fn [_request] post-items-response)
                       [:get "/items"]
                       (fn [_request] list-items-response)
                       [:get "/search"]
@@ -123,6 +126,23 @@
     (is (= 200 (:status (h {:request-method :get
                             :uri "/search"
                             :query-string "term=yolo"}))))))
+
+(deftest path-params-test
+  (let [h (make-handler {:schema-path "classpath://test_path_params.json"})]
+    (is (= 200
+           (:status (h {:request-method :get
+                        :path-params {:itemId item-id}
+                        :uri (str "/item/" item-id)}))))
+    (is (= {:status 400,
+            :headers {"Content-Type" "application/problem+json"},
+            :body
+            "{\"type\":\"#/http-problem-types/request-invalid-path-parameters\",\"errors\":[{\"path\":\"$.format\",\"pointer\":\"#/paths/~1item~1{itemId}/parameters/0/schema/format\",\"location\":\"$\",\"detail\":\"does not match the uuid pattern must be a valid RFC 4122 UUID\"}],\"title\":\"Invalid Path Parameters\"}"}
+           (h {:request-method :get
+               :path-params {:itemId "yolo"}
+               :uri "/item/yolo"})
+           (h {:request-method :post
+               :path-params {:itemId "yolo"}
+               :uri "/item/yolo"})))))
 
 (deftest response-body-test
   (let [h (make-handler {:post-items-response {:body {:name "yolo"

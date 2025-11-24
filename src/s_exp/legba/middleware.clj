@@ -12,7 +12,12 @@
   options:, such as including the validation schema with each
   request (`include-schema`)."
   [handler schema method path {:as opts :keys [include-schema]}]
-  (let [sub-schema (get-in schema [:openapi-schema "paths" path (name method)])]
+  (let [path-schema (get-in schema [:openapi-schema "paths" path])
+        path-parameters (select-keys path-schema ["parameters"])
+        sub-schema (cond-> (get path-schema (name method))
+                     (seq path-parameters)
+                     ;; we could have validation at the path level, before the method scope
+                     (assoc :path-parameters path-parameters))]
     (-> (fn [request]
           (let [request (request/validate
                          request
