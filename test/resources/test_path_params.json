@@ -1,0 +1,62 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Simple API Example",
+        "summary": "An OpenAPI 3.1 example for testing support of path-level properties",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/item/{itemId}": {
+            "summary": "The base path.",
+            "description": "All methods use this path.",
+            "servers": [
+                {
+                    "url": "http://server.example/api"
+                }
+            ],
+            "x-custom-attribute": true,
+            "parameters": [
+                {
+                    "name": "itemId",
+                    "in": "path",
+                    "description": "The identifier.",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            ],
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
