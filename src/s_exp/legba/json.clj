@@ -3,7 +3,9 @@
   (:require [jsonista.core :as jsonista])
   (:import
    (com.fasterxml.jackson.databind ObjectMapper
-                                   JsonNode)
+                                   JsonNode
+                                   SerializationFeature
+                                   MapperFeature)
    (com.fasterxml.jackson.databind.node ObjectNode
                                         ArrayNode
                                         NullNode
@@ -17,6 +19,22 @@
    (java.util Iterator)))
 
 (set! *warn-on-reflection* true)
+
+(defn- set-mapper-defaults!
+  "Sets sane defaults on jsonista, without this jsonista will do mad stuff such as
+  serializing POJO fields as json attributes"
+  [object-mapper]
+  (doto object-mapper
+    (.configure SerializationFeature/FAIL_ON_EMPTY_BEANS false)
+    (.configure MapperFeature/AUTO_DETECT_GETTERS false)
+    (.configure MapperFeature/AUTO_DETECT_IS_GETTERS false)
+    (.configure MapperFeature/AUTO_DETECT_SETTERS false)
+    (.configure MapperFeature/AUTO_DETECT_FIELDS false)
+    (.configure MapperFeature/DEFAULT_VIEW_INCLUSION false)))
+
+(def json-mapper-default
+  (-> (jsonista/object-mapper)
+      set-mapper-defaults!))
 
 (defn- iterator->reducible
   [^Iterator iter]
@@ -114,17 +132,17 @@
   "Takes a json-str String and returns a Jackson JsonNode"
   [^String json-str]
   (when json-str
-    (.readTree ^ObjectMapper jsonista/default-object-mapper json-str)))
+    (.readTree ^ObjectMapper json-mapper-default json-str)))
 
 (defn json-node->str
   "Takes a Jackson JsonNode and returns an equivalent String value"
   [^JsonNode json-node]
-  (.writeValueAsString ^ObjectMapper jsonista/default-object-mapper json-node))
+  (.writeValueAsString ^ObjectMapper json-mapper-default json-node))
 
 (defn clj->json-node
   "Takes a clj value and converts it to a Jackson JsonNode"
   [x]
-  (.valueToTree ^ObjectMapper jsonista/default-object-mapper x))
+  (.valueToTree ^ObjectMapper json-mapper-default x))
 
 (defn json-content-type?
   "Returns true if `content-type` is `application/json`"
