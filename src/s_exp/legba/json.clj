@@ -23,7 +23,7 @@
 (defn set-mapper-defaults!
   "Sets sane defaults on jsonista, without this jsonista will do mad stuff such as
   serializing POJO fields as json attributes"
-  [object-mapper]
+  [^ObjectMapper object-mapper]
   (doto object-mapper
     (.configure SerializationFeature/FAIL_ON_EMPTY_BEANS false)
     (.configure MapperFeature/AUTO_DETECT_GETTERS false)
