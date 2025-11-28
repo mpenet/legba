@@ -20,7 +20,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn- set-mapper-defaults!
+(defn set-mapper-defaults!
   "Sets sane defaults on jsonista, without this jsonista will do mad stuff such as
   serializing POJO fields as json attributes"
   [object-mapper]
