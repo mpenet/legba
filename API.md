@@ -1,7 +1,7 @@
 # Table of contents
 -  [`s-exp.legba`](#s-exp.legba) 
     -  [`default-options`](#s-exp.legba/default-options) - Default options used by openapi-handler.
-    -  [`ensure-handler-coverage!`](#s-exp.legba/ensure-handler-coverage!) - Checks that a map of openapi-handlers covers all paths defined by the schema.
+    -  [`ensure-route-coverage!`](#s-exp.legba/ensure-route-coverage!) - Checks that a map of openapi-handlers covers all paths defined by the schema.
     -  [`handlers`](#s-exp.legba/handlers) - From a map of [method path] -> ring handler returns a map of [method path] -> openapi-wrapped-handler.
     -  [`middlewares`](#s-exp.legba/middlewares) - From a sequence of [method path] tuples returns a map of [method path] -> openapi validation middlewares.
     -  [`routing-handler`](#s-exp.legba/routing-handler) - Same as <code>routing-handler*</code> but wraps with <code>s-exp.legba.middleware/wrap-error-response</code> middleware turning exceptions into nicely formatted error responses.
@@ -42,6 +42,7 @@
 -  [`s-exp.legba.openapi-schema`](#s-exp.legba.openapi-schema) 
     -  [`get-schema`](#s-exp.legba.openapi-schema/get-schema) - Returns json-schema from schema-registry at <code>schema-uri</code>/<code>json-pointer</code>.
     -  [`load-schema`](#s-exp.legba.openapi-schema/load-schema) - Loads JSON or YAML schema from <code>schema-uri</code> and returns map (of :openapi-schema, :schema-uri, :schema-registry) that contains all the necessary information to perform <code>validate!</code> calls later (minus a JSON pointer).
+    -  [`schema->routes-schema`](#s-exp.legba.openapi-schema/schema->routes-schema)
     -  [`schema-registry-config`](#s-exp.legba.openapi-schema/schema-registry-config) - Default reusable <code>SchemaRegistryConfig</code> instance.
     -  [`validate`](#s-exp.legba.openapi-schema/validate) - Validates a <code>val</code> against <code>schema</code>.
     -  [`validate-schema!`](#s-exp.legba.openapi-schema/validate-schema!) - Validates a user-provided JSON schema against the OpenAPI 3.1 base schema.
@@ -82,10 +83,10 @@
 Default options used by openapi-handler
 <p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L9-L16">Source</a></sub></p>
 
-## <a name="s-exp.legba/ensure-handler-coverage!">`ensure-handler-coverage!`</a><a name="s-exp.legba/ensure-handler-coverage!"></a>
+## <a name="s-exp.legba/ensure-route-coverage!">`ensure-route-coverage!`</a><a name="s-exp.legba/ensure-route-coverage!"></a>
 ``` clojure
 
-(ensure-handler-coverage! openapi-handlers {:as _schema, :keys [openapi-schema]})
+(ensure-route-coverage! routes {:as _schema, :keys [openapi-schema]})
 ```
 
 Checks that a map of openapi-handlers covers all paths defined by the schema
@@ -94,7 +95,7 @@ Checks that a map of openapi-handlers covers all paths defined by the schema
 ## <a name="s-exp.legba/handlers">`handlers`</a><a name="s-exp.legba/handlers"></a>
 ``` clojure
 
-(handlers routes schema & {:as opts})
+(handlers routes schema-path & {:as opts})
 ```
 
 From a map of [method path] -> ring handler returns a map of [method path] ->
@@ -114,12 +115,12 @@ From a map of [method path] -> ring handler returns a map of [method path] ->
 
   * `:include-schema`: - adds the path-relevant schema portion to the
   request-map under `:s-exp.legba/schema` (`false` by default)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L63-L88">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L66-L93">Source</a></sub></p>
 
 ## <a name="s-exp.legba/middlewares">`middlewares`</a><a name="s-exp.legba/middlewares"></a>
 ``` clojure
 
-(middlewares paths schema & {:as opts})
+(middlewares schema-path & {:as opts})
 ```
 
 From a sequence of [method path] tuples returns a map of [method path] ->
@@ -139,23 +140,23 @@ From a sequence of [method path] tuples returns a map of [method path] ->
 
   * `:include-schema`: - adds the path-relevant schema portion to the
   request-map under `:s-exp.legba/schema` (`false` by default)
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L33-L61">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L33-L64">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler">`routing-handler`</a><a name="s-exp.legba/routing-handler"></a>
 ``` clojure
 
-(routing-handler routes schema & {:as opts})
+(routing-handler routes schema-path & {:as opts})
 ```
 
 Same as [`routing-handler*`](#s-exp.legba/routing-handler*) but wraps with
   [`s-exp.legba.middleware/wrap-error-response`](#s-exp.legba.middleware/wrap-error-response) middleware turning exceptions
   into nicely formatted error responses
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L129-L138">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L132-L141">Source</a></sub></p>
 
 ## <a name="s-exp.legba/routing-handler*">`routing-handler*`</a><a name="s-exp.legba/routing-handler*"></a>
 ``` clojure
 
-(routing-handler* routes schema & {:as opts, :keys [path-params-key]})
+(routing-handler* routes schema-path & {:as opts, :keys [path-params-key]})
 ```
 
 Takes a map of routes as [method path] -> ring-handler, turns them into a map
@@ -180,7 +181,7 @@ Takes a map of routes as [method path] -> ring-handler, turns them into a map
   * `:extra-routes` - extra routes to be passed to the underlying router
 
   throw and assocs the error on the ring response as response-validation-error.  
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L90-L127">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba.clj#L95-L130">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.json">s-exp.legba.json</a>
@@ -553,7 +554,7 @@ Matches `content-type` with `schema`, return resulting `sub-schema`
 ```
 
 Returns json-schema from schema-registry at `schema-uri`/`json-pointer`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L76-L82">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L84-L90">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/load-schema">`load-schema`</a><a name="s-exp.legba.openapi-schema/load-schema"></a>
 ``` clojure
@@ -565,7 +566,14 @@ Loads JSON or YAML schema from `schema-uri` and returns
   map (of :openapi-schema, :schema-uri, :schema-registry) that contains all the
   necessary information to perform `validate!` calls later (minus a JSON
   pointer).
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L84-L106">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L92-L114">Source</a></sub></p>
+
+## <a name="s-exp.legba.openapi-schema/schema->routes-schema">`schema->routes-schema`</a><a name="s-exp.legba.openapi-schema/schema->routes-schema"></a>
+``` clojure
+
+(schema->routes-schema {:as _schema, :keys [openapi-schema]})
+```
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L21-L27">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/schema-registry-config">`schema-registry-config`</a><a name="s-exp.legba.openapi-schema/schema-registry-config"></a>
 
@@ -582,7 +590,7 @@ Default reusable `SchemaRegistryConfig` instance.
   - Use `JSON_PATH` for error paths in validation results
 
   This config can be reused for schema load/validation for performance and consistency.
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L21-L39">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L29-L47">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/validate">`validate`</a><a name="s-exp.legba.openapi-schema/validate"></a>
 ``` clojure
@@ -596,7 +604,7 @@ Default reusable `SchemaRegistryConfig` instance.
 ```
 
 Validates a `val` against `schema`
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L108-L123">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L116-L131">Source</a></sub></p>
 
 ## <a name="s-exp.legba.openapi-schema/validate-schema!">`validate-schema!`</a><a name="s-exp.legba.openapi-schema/validate-schema!"></a>
 ``` clojure
@@ -616,7 +624,7 @@ Validates a user-provided JSON schema against the OpenAPI 3.1 base schema.
 
   This function uses the OpenAPI 3.1 base schema loaded from the local classpath
   to validate the user schema and reports any problems found in a structured way.
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L41-L74">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/openapi_schema.clj#L49-L82">Source</a></sub></p>
 
 -----
 # <a name="s-exp.legba.overlay">s-exp.legba.overlay</a>
@@ -788,14 +796,10 @@ Performs validation of response headers
 ## <a name="s-exp.legba.router/router">`router`</a><a name="s-exp.legba.router/router"></a>
 ``` clojure
 
-(router
- {:as _schema, :keys [openapi-schema]}
- openapi-handlers
- &
- {:as _opts, :keys [extra-routes], :or {extra-routes {}}})
+(router handlers & {:as _opts, :keys [extra-routes], :or {extra-routes {}}})
 ```
 
 Creates a router that matches by method/path for a given `schema`.
   `extra-routes` can be passed to add non openapi centric routes to the routing
   table
-<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L6-L18">Source</a></sub></p>
+<p><sub><a href="https://github.com/mpenet/legba/blob/main/src/s_exp/legba/router.clj#L6-L12">Source</a></sub></p>

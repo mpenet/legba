@@ -56,9 +56,10 @@
                   (assoc m
                          coords
                          (fn validation-middleware [handler]
-                           (-> handler
-                               (m/wrap-validation schema method path opts)
-                               (ring-params/wrap-params))))))
+                           (let [h (m/wrap-validation handler schema method path opts)]
+                             (vary-meta (ring-params/wrap-params h)
+                                        merge (meta h)))))))
+
             {}
             paths)))
 
