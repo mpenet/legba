@@ -30,6 +30,15 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "term-not-required",
+                        "in": "query",
+                        "required": false,
+                        "description": "Search term",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {

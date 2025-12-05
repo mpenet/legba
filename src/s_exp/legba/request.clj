@@ -32,23 +32,25 @@
   [request schema sub-schema {:as opts :keys [query-string-params-key]}]
   (when-let [m-query-params (query-params-schema sub-schema)]
     (doseq [[schema-key {:as query-schema :strs [required]}] m-query-params
-            :let [param-val (get-in request [query-string-params-key
-                                             (name schema-key)]
+            :let [param-val (get-in request [query-string-params-key (name schema-key)]
                                     :s-exp.legba.request/missing)
-                  _ (when (and required (= :s-exp.legba.request/missing param-val))
-                      (throw (ex-info "Missing Required Query Parameter"
-                                      {:type :s-exp.legba.request/missing-query-parameter
-                                       :errors [{:pointer (-> query-schema meta :json-pointer)
-                                                 :detail "required query parameter missing"}]
-                                       :schema query-schema})))]]
-      (when-let [errors (schema/validate schema
-                                         (get query-schema "schema")
-                                         (pr-str (or param-val ""))
-                                         opts)]
-        (throw (ex-info "Invalid Query Parameters"
-                        {:type :s-exp.legba.request/invalid-query-parameters
-                         :schema m-query-params
-                         :errors errors})))))
+                  missing (= :s-exp.legba.request/missing param-val)]]
+      (cond
+        (and required missing)
+        (throw (ex-info "Missing Required Query Parameter"
+                        {:type :s-exp.legba.request/missing-query-parameter
+                         :errors [{:pointer (-> query-schema meta :json-pointer)
+                                   :detail "required query parameter missing"}]
+                         :schema query-schema}))
+        (not missing)
+        (when-let [errors (schema/validate schema
+                                           (get query-schema "schema")
+                                           (pr-str (or param-val ""))
+                                           opts)]
+          (throw (ex-info "Invalid Query Parameters"
+                          {:type :s-exp.legba.request/invalid-query-parameters
+                           :schema m-query-params
+                           :errors errors}))))))
   request)
 
 (defn validate-cookie-params
@@ -58,20 +60,23 @@
     (doseq [[schema-key {:as cookie-schema :strs [required]}] m-cookie-params
             :let [param-val (get-in request [:cookies schema-key]
                                     :s-exp.legba.request/missing)
-                  _ (when (and required (= :s-exp.legba.request/missing param-val))
-                      (throw (ex-info "Missing Required Cookie Parameter"
-                                      {:type :s-exp.legba.request/missing-cookie-parameter
-                                       :errors [{:pointer (-> cookie-schema meta :json-pointer)
-                                                 :detail "required cookie parameter missing"}]
-                                       :schema cookie-schema})))]]
-      (when-let [errors (schema/validate schema
-                                         (get cookie-schema "schema")
-                                         (pr-str (or param-val ""))
-                                         opts)]
-        (throw (ex-info "Invalid Cookie Parameters"
-                        {:type :s-exp.legba.request/invalid-cookie-parameters
-                         :schema m-cookie-params
-                         :errors errors})))))
+                  missing (= :s-exp.legba.request/missing param-val)]]
+      (cond
+        (and required missing)
+        (throw (ex-info "Missing Required Cookie Parameter"
+                        {:type :s-exp.legba.request/missing-cookie-parameter
+                         :errors [{:pointer (-> cookie-schema meta :json-pointer)
+                                   :detail "required cookie parameter missing"}]
+                         :schema cookie-schema}))
+        (not missing)
+        (when-let [errors (schema/validate schema
+                                           (get cookie-schema "schema")
+                                           (pr-str (or param-val ""))
+                                           opts)]
+          (throw (ex-info "Invalid Cookie Parameters"
+                          {:type :s-exp.legba.request/invalid-cookie-parameters
+                           :schema m-cookie-params
+                           :errors errors}))))))
   request)
 
 (defn validate-method-params
