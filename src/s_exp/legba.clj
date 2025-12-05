@@ -30,6 +30,36 @@
       (ex/ex-incorrect! (format "Missing handlers for %s"
                                 (str/join ", " missing-handlers))))))
 
+(defn middlewares
+  "From a sequence of [method path] tuples returns a map of [method path] ->
+  openapi validation middlewares.
+
+  Options:
+
+  * `:key-fn` - Control map keys decoding when turning jackson JsonNodes to clj
+    data for the handler - default to `keyword`
+
+  * `:query-string-params-key` - where to find the decoded query-string
+     parameters - defaults to `:query-params`
+
+  * `:validation-result` - function that controls how to turn
+  `com.networknt.schema.ValidationResult` into a clj -> json response. Defaults
+  to `s-exp.legba.openapi-schema/validation-result`
+
+  * `:include-schema`: - adds the path-relevant schema portion to the
+  request-map under `:s-exp.legba/schema` (`false` by default)"
+  [paths schema & {:as opts}]
+  (let [opts (merge default-options opts)]
+    (reduce (-> (fn [m [method path :as coords]]
+                  (assoc m
+                         coords
+                         (fn validation-middleware [handler]
+                           (-> handler
+                               (m/wrap-validation schema method path opts)
+                               (ring-params/wrap-params))))))
+            {}
+            paths)))
+
 (defn handlers
   "From a map of [method path] -> ring handler returns a map of [method path] ->
   openapi-wrapped-handler.
@@ -49,17 +79,11 @@
   * `:include-schema`: - adds the path-relevant schema portion to the
   request-map under `:s-exp.legba/schema` (`false` by default)"
   [routes schema & {:as opts}]
-  (let [opts (merge default-options opts)]
-    (reduce (-> (fn [m [[method path :as coords] handler]]
-                  (assoc m
-                         coords
-                         (-> handler
-                             (m/wrap-validation
-                              schema
-                              method
-                              path
-                              opts)
-                             (ring-params/wrap-params)))))
+  (let [opts (merge default-options opts)
+        middlewares* (middlewares (keys routes) schema opts)]
+    (reduce (-> (fn [m [coords handler]]
+                  (let [middleware (get middlewares* coords)]
+                    (assoc m coords (middleware handler)))))
             {}
             routes)))
 
