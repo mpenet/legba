@@ -18,6 +18,14 @@
 
 (set! *warn-on-reflection* true)
 
+(defn schema->routes-schema
+  [{:as _schema :keys [openapi-schema]}]
+  (into {}
+        (for [[path methods] (get openapi-schema "paths")
+              [method sub-schema] methods
+              :when (#{"delete" "get" "head" "options" "patch" "post" "put" "trace"} method)]
+          {[(keyword method) path] sub-schema})))
+
 (def schema-registry-config
   "Default reusable `SchemaRegistryConfig` instance.
 

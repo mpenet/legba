@@ -15,20 +15,20 @@
    :write-response-json-body true
    :read-request-json-body true})
 
-(defn ensure-handler-coverage!
+(defn ensure-route-coverage!
   "Checks that a map of openapi-handlers covers all paths defined by the schema"
-  [openapi-handlers {:as _schema :keys [openapi-schema]}]
-  (let [missing-handlers
+  [routes {:as _schema :keys [openapi-schema]}]
+  (let [missing-routes
         (for [[path methods] (get openapi-schema "paths")
               [method & _] methods
               :when (#{"delete" "get" "head" "options" "patch" "post" "put" "trace"} method)
               :let [method (keyword method)
-                    matching-entry (get openapi-handlers [(keyword method) path])]
+                    matching-entry (get routes [(keyword method) path])]
               :when (not matching-entry)]
           [path method])]
-    (when (seq missing-handlers)
+    (when (seq missing-routes)
       (ex/ex-incorrect! (format "Missing handlers for %s"
-                                (str/join ", " missing-handlers))))))
+                                (str/join ", " missing-routes))))))
 
 (defn middlewares
   "From a sequence of [method path] tuples returns a map of [method path] ->
@@ -48,8 +48,10 @@
 
   * `:include-schema`: - adds the path-relevant schema portion to the
   request-map under `:s-exp.legba/schema` (`false` by default)"
-  [paths schema & {:as opts}]
-  (let [opts (merge default-options opts)]
+  [schema-path & {:as opts}]
+  (let [schema (schema/load-schema schema-path)
+        paths (keys (schema/schema->routes-schema schema))
+        opts (merge default-options opts)]
     (reduce (-> (fn [m [method path :as coords]]
                   (assoc m
                          coords
@@ -78,14 +80,16 @@
 
   * `:include-schema`: - adds the path-relevant schema portion to the
   request-map under `:s-exp.legba/schema` (`false` by default)"
-  [routes schema & {:as opts}]
+  [routes schema-path & {:as opts}]
   (let [opts (merge default-options opts)
-        middlewares* (middlewares (keys routes) schema opts)]
-    (reduce (-> (fn [m [coords handler]]
-                  (let [middleware (get middlewares* coords)]
-                    (assoc m coords (middleware handler)))))
+        middlewares* (middlewares schema-path opts)
+        _ (ensure-route-coverage! routes middlewares*)]
+    (reduce (-> (fn [m [coords middleware]]
+                  (if-let [handler (get routes coords)]
+                    (assoc m coords (middleware handler))
+                    m)))
             {}
-            routes)))
+            middlewares*)))
 
 (defn routing-handler*
   "Takes a map of routes as [method path] -> ring-handler, turns them into a map
@@ -110,14 +114,12 @@
   * `:extra-routes` - extra routes to be passed to the underlying router
 
   throw and assocs the error on the ring response as response-validation-error.  "
-  [routes schema & {:as opts
-                    :keys [path-params-key]}]
+  [routes schema-path & {:as opts
+                         :keys [path-params-key]}]
   (let [{:as opts :keys [not-found-response]}
         (merge default-options opts)
-        schema (schema/load-schema schema)
-        handlers (handlers routes schema opts)
-        _ (ensure-handler-coverage! handlers schema)
-        router (router/router schema handlers opts)]
+        handlers (handlers routes schema-path opts)
+        router (router/router handlers opts)]
     (fn [{:as request}]
       (if-let [[handler path-params] (router/match router request)]
         (cond-> request
@@ -130,10 +132,10 @@
   "Same as `routing-handler*` but wraps with
   `s-exp.legba.middleware/wrap-error-response` middleware turning exceptions
   into nicely formatted error responses"
-  [routes schema & {:as opts}]
+  [routes schema-path & {:as opts}]
   (let [opts (merge default-options opts)]
     (-> (routing-handler* routes
-                          schema
+                          schema-path
                           opts)
         (m/wrap-error-response opts))))
 
