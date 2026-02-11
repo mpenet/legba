@@ -140,5 +140,5 @@
                           opts)
         (m/wrap-error-response opts))))
 
-(ex/derive :s-exp.legba/invalid :exoscale.ex/invalid)
+(ex/derive :s-exp.legba/invalid :exoscale.ex/incorrect)
 (ex/derive :s-exp.legba/handler-undefined :exoscale.ex/fault)
