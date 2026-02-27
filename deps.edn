@@ -13,14 +13,18 @@
         com.networknt/json-schema-validator {:mvn/version "2.0.1"}
         com.jayway.jsonpath/json-path {:mvn/version "2.9.0"}
         ring/ring-core {:mvn/version "1.15.3"}
-        com.s-exp/appia {:mvn/version "1.0.0-alpha8"}}
+        com.s-exp/appia {:mvn/version "1.0.0-alpha10"}}
  :aliases
  {:test
-  {:extra-deps {legba/test-runner {:local/root "dev"}
+  {:extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}
                 org.clojure/test.check {:mvn/version "1.1.1"}}
-   :jvm-opts ["-Dclojure.main.report=stderr"]
-   :exec-fn test-runner/run
-   :extra-paths ["test" "dev" "test/resources"]}
+   :extra-paths ["test" "test/resources"]
+   :exec-fn kaocha.runner/exec-fn
+   :exec-args {:tests [{:type :kaocha.type/clojure.test
+                        :id :unit
+                        :test-paths ["test"]
+                        :source-paths ["src"]}]
+               :reporter [kaocha.report/documentation]}}
 
   :build
   {:deps {io.github.clojure/tools.build {:git/tag "v0.10.9" :git/sha "e405aac"}
