@@ -34,6 +34,18 @@
                  :path "$.properties.fruits.items.type",
                  :pointer "#/properties/fruits/items/type"}]))))))
 
+(deftest validate-schema-test
+  (testing "valid schema passes"
+    (is (nil? (js/validate-schema! (js/schema schema-path)))))
+  (testing "invalid schema throws"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Schema invalid"
+                          (js/validate-schema! (js/schema "classpath:test-broken-schema.json")))))
+  (testing "schema fn with :validate-schema true passes valid schema"
+    (is (some? (js/schema schema-path :validate-schema true))))
+  (testing "schema fn with :validate-schema true throws on invalid schema"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Schema invalid"
+                          (js/schema "classpath:test-broken-schema.json" :validate-schema true)))))
+
 (deftest validation-result-test
   (let [schema (js/schema schema-path)]
     (testing "Extracts error info"

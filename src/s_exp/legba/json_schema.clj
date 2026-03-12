@@ -35,36 +35,6 @@
       (.pathType PathType/JSON_PATH))
     (.build b)))
 
-(defn schema
-  "Loads and builds a JSON Schema validator instance from a URI or file path.
-
-  Arguments:
-    - `schema-uri` (string): Location of the JSON Schema (file:/..., http:/...,
-  classpath:/..., etc)
-
-    - `:schema-registry-config` (optional): Custom
-  `SchemaRegistryConfig` (default: this namespace's `schema-registry-config`).
-
-  Returns:
-
-    An instance of the JSON Schema validator (`com.networknt.schema.JsonSchema`).
-    This object can be reused to validate multiple values or payloads.
-
-  Example:
-    (schema \"classpath:///tmp/foo.schema.json\")
-    (schema \"file:///data/schema/bar.json\")
-    (schema \"https://schemas.org/example.schema.json\")"
-  [^String schema-uri
-   & {:as _opts :keys [schema-registry-config]
-      :or {schema-registry-config schema-registry-config}}]
-  (let [schema-registry (SchemaRegistry/withDefaultDialect
-                         SpecificationVersion/DRAFT_2020_12
-                         (fn [^SchemaRegistry$Builder builder]
-                           (doto builder
-                             (.schemaCacheEnabled true)
-                             (.schemaRegistryConfig schema-registry-config))))]
-    (.getSchema schema-registry (SchemaLocation/of schema-uri))))
-
 (defn validation-result
   "Extracts and formats schema validation errors from a ValidationResult object.
 
@@ -88,6 +58,65 @@
                     :location (.toString (.getInstanceLocation m))
                     :detail (.getMessage m)}))
             errors))))
+
+(def ^:private meta-schema-uri
+  "URI of the JSON Schema draft 2020-12 meta-schema used to validate user schemas."
+  "https://json-schema.org/draft/2020-12/schema")
+
+(defn validate-schema!
+  "Validates a loaded JSON Schema against the JSON Schema draft 2020-12
+  meta-schema. Throws an ex-info with `:type
+  :s-exp.legba.json-schema/invalid-schema` and `:errors` if the schema does not
+  conform."
+  [^Schema user-schema]
+  (let [registry (SchemaRegistry/withDefaultDialect
+                  SpecificationVersion/DRAFT_2020_12
+                  (fn [^SchemaRegistry$Builder builder] builder))
+        meta-schema (.getSchema registry (SchemaLocation/of meta-schema-uri))
+        errors (-> meta-schema
+                   (.validate (.getSchemaNode user-schema) OutputFormat/RESULT)
+                   validation-result)]
+    (when (seq errors)
+      (throw (ex-info "Schema invalid" {:type :s-exp.legba.json-schema/invalid-schema
+                                        :errors errors})))))
+
+(defn schema
+  "Loads and builds a JSON Schema validator instance from a URI or file path.
+
+  Arguments:
+    - `schema-uri` (string): Location of the JSON Schema (file:/..., http:/...,
+  classpath:/..., etc)
+
+    - `:schema-registry-config` (optional): Custom
+  `SchemaRegistryConfig` (default: this namespace's `schema-registry-config`).
+
+    - `:validate-schema` (optional, default true): When true, validates the
+  loaded schema against the JSON Schema draft 2020-12 meta-schema and throws if
+  it does not conform.
+
+  Returns:
+
+    An instance of the JSON Schema validator (`com.networknt.schema.JsonSchema`).
+    This object can be reused to validate multiple values or payloads.
+
+  Example:
+    (schema \"classpath:///tmp/foo.schema.json\")
+    (schema \"file:///data/schema/bar.json\")
+    (schema \"https://schemas.org/example.schema.json\")"
+  [^String schema-uri
+   & {:as _opts :keys [schema-registry-config validate-schema]
+      :or {schema-registry-config schema-registry-config
+           validate-schema true}}]
+  (let [schema-registry (SchemaRegistry/withDefaultDialect
+                         SpecificationVersion/DRAFT_2020_12
+                         (fn [^SchemaRegistry$Builder builder]
+                           (doto builder
+                             (.schemaCacheEnabled true)
+                             (.schemaRegistryConfig schema-registry-config))))
+        s (.getSchema schema-registry (SchemaLocation/of schema-uri))]
+    (when validate-schema
+      (validate-schema! s))
+    s))
 
 (defn validate
   "Validates a value against a previously loaded or constructed schema.
