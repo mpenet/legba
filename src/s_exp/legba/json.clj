@@ -6,6 +6,7 @@
                                    JsonNode
                                    SerializationFeature
                                    MapperFeature)
+   (com.fasterxml.jackson.dataformat.yaml YAMLMapper)
    (com.fasterxml.jackson.databind.node ObjectNode
                                         ArrayNode
                                         NullNode
@@ -149,6 +150,16 @@
   [content-type]
   (re-find #"(?i)application/json(:?[;]|$)"
            content-type))
+
+(def yaml-mapper
+  (YAMLMapper.))
+
+(defn yaml-str->json-str
+  "Converts a YAML string to a JSON string"
+  [^String yaml-str]
+  (-> ^YAMLMapper yaml-mapper
+      (.readTree yaml-str)
+      (->> (.writeValueAsString ^ObjectMapper json-mapper-default))))
 
 (defn multipart-content-type?
   "Returns true if `content-type` is `multipart/form-data`"

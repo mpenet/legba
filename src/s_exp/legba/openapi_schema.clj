@@ -114,6 +114,41 @@
      :schema-uri schema-uri
      :schema-registry schema-registry}))
 
+(defn load-schema-string
+  "Loads a JSON or YAML OpenAPI schema from a raw string `s`.
+
+  An optional `:schema-uri` can be provided to anchor `$ref` resolution; if
+  omitted a random `urn:legba:<uuid>` URI is generated. YAML strings are
+  detected by the `:yaml` format option (`:format :yaml`), otherwise JSON is
+  assumed.
+
+  Returns the same map as `load-schema`: `{:openapi-schema … :schema-uri …
+  :schema-registry …}`."
+  [^String s & {:as _opts :keys [schema-uri format validate-schema]
+                :or {validate-schema true}}]
+  (let [schema-uri (or schema-uri (str "urn:legba:" (random-uuid)))
+        json-str (if (= :yaml format)
+                   (json/yaml-str->json-str s)
+                   s)
+        schema-registry (SchemaRegistry/withDialect
+                         (Dialects/getOpenApi31)
+                         (fn [^SchemaRegistry$Builder builder]
+                           (doto builder
+                             (.schemaCacheEnabled true)
+                             (.schemaRegistryConfig schema-registry-config)
+                             (.schemas ^java.util.Map (doto (java.util.HashMap.)
+                                                        (.put schema-uri json-str))))))
+        _ (when validate-schema
+            (validate-schema! schema-registry schema-uri))
+        openapi-schema (-> schema-registry
+                           (get-schema schema-uri "")
+                           .getSchemaNode
+                           (json/json-node->clj {:key-fn identity})
+                           (json-pointer/annotate-tree))]
+    {:openapi-schema openapi-schema
+     :schema-uri schema-uri
+     :schema-registry schema-registry}))
+
 (defn validate
   "Validates a `val` against `schema`"
   [{:as _schema :keys [schema-uri schema-registry]}
