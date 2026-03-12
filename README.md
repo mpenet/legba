@@ -160,6 +160,10 @@ There's also an extra argument with options:
 
 * `:include-error-schema` - if true includes relevant schema portion with error response
 
+* `:schema-src-type` - `:path` (default) treats the `schema-src` argument as a
+  URI/file path and loads it via `read-schema`; `:string` treats it as a raw
+  JSON or YAML string and loads it via `read-schema-str`
+
 ### Notes
 
 * You don't have to do any JSON marshaling, if the content-type is of
@@ -188,11 +192,15 @@ Define a simple JSON schema file `json-schema.json`
 ```
 
 ```clojure
-(require '[s-exp.legba.json-schema :as json-schema]
+(require '[s-exp.legba.json-schema :as json-schema])
 
-;; Validate the data
-(-> (json-schema/schema "classpath://json-schema.json")
-    (json-schema/validate!  "{\"name\":\"Alice\",\"age\":30}"))
+;; Load from a URI and validate
+(-> (json-schema/read-schema "classpath://json-schema.json")
+    (json-schema/validate! "{\"name\":\"Alice\",\"age\":30}"))
+
+;; Load from a raw JSON string and validate
+(-> (json-schema/read-schema-str "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"age\":{\"type\":\"integer\"}},\"required\":[\"name\",\"age\"],\"additionalProperties\":false}")
+    (json-schema/validate! "{\"name\":\"Alice\",\"age\":30}"))
 ```
 
 ## OpenAPI Overlay Support

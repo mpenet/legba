@@ -13,7 +13,8 @@
    :query-string-params-key :query-params
    :path-params-key :path-params
    :write-response-json-body true
-   :read-request-json-body true})
+   :read-request-json-body true
+   :schema-src-type :path})
 
 (defn ensure-route-coverage!
   "Checks that a map of openapi-handlers covers all paths defined by the schema"
@@ -47,11 +48,17 @@
   to `s-exp.legba.openapi-schema/validation-result`
 
   * `:include-schema`: - adds the path-relevant schema portion to the
-  request-map under `:s-exp.legba/schema` (`false` by default)"
-  [schema-path & {:as opts}]
-  (let [schema (schema/load-schema schema-path)
-        paths (keys (schema/schema->routes-schema schema))
-        opts (merge default-options opts)]
+  request-map under `:s-exp.legba/schema` (`false` by default)
+
+  * `:schema-src-type` - `:path` (default) to load from a URI/path via
+  `read-schema`, or `:string` to load from a raw JSON/YAML string via
+  `read-schema-str`"
+  [schema-src & {:as opts}]
+  (let [opts (merge default-options opts)
+        schema (if (= :string (:schema-src-type opts))
+                 (schema/read-schema-str schema-src opts)
+                 (schema/read-schema schema-src opts))
+        paths (keys (schema/schema->routes-schema schema))]
     (reduce (-> (fn [m [method path :as coords]]
                   (assoc m
                          coords
@@ -81,9 +88,9 @@
 
   * `:include-schema`: - adds the path-relevant schema portion to the
   request-map under `:s-exp.legba/schema` (`false` by default)"
-  [routes schema-path & {:as opts}]
+  [routes schema-src & {:as opts}]
   (let [opts (merge default-options opts)
-        middlewares* (middlewares schema-path opts)
+        middlewares* (middlewares schema-src opts)
         _ (ensure-route-coverage! routes middlewares*)]
     (reduce (-> (fn [m [coords middleware]]
                   (if-let [handler (get routes coords)]
@@ -115,11 +122,11 @@
   * `:extra-routes` - extra routes to be passed to the underlying router
 
   throw and assocs the error on the ring response as response-validation-error.  "
-  [routes schema-path & {:as opts
-                         :keys [path-params-key]}]
+  [routes schema-src & {:as opts
+                        :keys [path-params-key]}]
   (let [{:as opts :keys [not-found-response]}
         (merge default-options opts)
-        handlers (handlers routes schema-path opts)
+        handlers (handlers routes schema-src opts)
         router (router/router handlers opts)]
     (fn [{:as request}]
       (if-let [[handler path-params] (router/match router request)]
@@ -133,10 +140,10 @@
   "Same as `routing-handler*` but wraps with
   `s-exp.legba.middleware/wrap-error-response` middleware turning exceptions
   into nicely formatted error responses"
-  [routes schema-path & {:as opts}]
+  [routes schema-src & {:as opts}]
   (let [opts (merge default-options opts)]
     (-> (routing-handler* routes
-                          schema-path
+                          schema-src
                           opts)
         (m/wrap-error-response opts))))
 

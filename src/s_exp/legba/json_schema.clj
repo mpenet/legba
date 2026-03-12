@@ -12,7 +12,8 @@
                                  SchemaLocation)
            (com.networknt.schema.dialect Dialect)
            (com.networknt.schema.path PathType)
-           (java.io InputStream)))
+           (java.io InputStream)
+           (java.util HashMap)))
 
 (set! *warn-on-reflection* true)
 
@@ -80,7 +81,7 @@
       (throw (ex-info "Schema invalid" {:type :s-exp.legba.json-schema/invalid-schema
                                         :errors errors})))))
 
-(defn schema
+(defn read-schema
   "Loads and builds a JSON Schema validator instance from a URI or file path.
 
   Arguments:
@@ -117,6 +118,38 @@
     (when validate-schema
       (validate-schema! s))
     s))
+
+(def ^:deprecated schema
+  "Alias for `read-schema`. Loads and builds a JSON Schema validator from a URI."
+  read-schema)
+
+(defn read-schema-str
+  "Loads and builds a JSON Schema validator from a raw JSON string `s`.
+
+  An optional `:schema-uri` can be provided to anchor `$ref` resolution; if
+  omitted a random `urn:legba:<uuid>` URI is generated.
+
+  Options mirror `schema`: `:schema-registry-config`, `:validate-schema`
+  (default true).
+
+  Returns a `com.networknt.schema.JsonSchema` instance."
+  [^String s
+   & {:as _opts :keys [schema-uri schema-registry-config validate-schema]
+      :or {schema-registry-config schema-registry-config
+           validate-schema true}}]
+  (let [schema-uri (or schema-uri (str "urn:legba:" (random-uuid)))
+        schema-registry (SchemaRegistry/withDefaultDialect
+                         SpecificationVersion/DRAFT_2020_12
+                         (fn [^SchemaRegistry$Builder builder]
+                           (doto builder
+                             (.schemaCacheEnabled true)
+                             (.schemaRegistryConfig schema-registry-config)
+                             (.schemas ^java.util.Map (doto (HashMap.)
+                                                        (.put schema-uri s))))))
+        loaded (.getSchema schema-registry (SchemaLocation/of schema-uri))]
+    (when validate-schema
+      (validate-schema! loaded))
+    loaded))
 
 (defn validate
   "Validates a value against a previously loaded or constructed schema.

@@ -299,24 +299,24 @@
   (is (not (mime-type/match-mime-type? "foo/bar" "fo/br")))
   (is (not (mime-type/match-mime-type? "foo/bar" "fooo/barr"))))
 
-(deftest load-schema-string-test
+(deftest read-schema-str-test
   (let [json-str (slurp (clojure.java.io/resource "schema/oas/3.1/store.json"))
         yaml-str (slurp (clojure.java.io/resource "schema/oas/3.1/store.yaml"))
-        json-ref (oas/load-schema "classpath://schema/oas/3.1/store.json")
-        yaml-ref (oas/load-schema "classpath://schema/oas/3.1/store.yaml")]
-    (let [s (oas/load-schema-string json-str)]
+        json-ref (oas/read-schema "classpath://schema/oas/3.1/store.json")
+        yaml-ref (oas/read-schema "classpath://schema/oas/3.1/store.yaml")]
+    (let [s (oas/read-schema-str json-str)]
       (is (map? s))
       (is (string? (:schema-uri s)))
       (is (= (get-in json-ref [:openapi-schema "openapi"])
              (get-in s [:openapi-schema "openapi"])))
       (is (= (set (keys (oas/schema->routes-schema json-ref)))
              (set (keys (oas/schema->routes-schema s))))))
-    (let [s (oas/load-schema-string yaml-str :format :yaml)]
+    (let [s (oas/read-schema-str yaml-str :format :yaml)]
       (is (= (get-in yaml-ref [:openapi-schema "openapi"])
              (get-in s [:openapi-schema "openapi"])))
       (is (= (set (keys (oas/schema->routes-schema yaml-ref)))
              (set (keys (oas/schema->routes-schema s))))))
-    (let [s (oas/load-schema-string json-str :schema-uri "urn:my-app:openapi")
+    (let [s (oas/read-schema-str json-str :schema-uri "urn:my-app:openapi")
           routes-schema (oas/schema->routes-schema s)
           body-schema (get-in routes-schema [[:post "/items"] "requestBody" "content" "application/json" "schema"])]
       (is (= "urn:my-app:openapi" (:schema-uri s)))
@@ -325,10 +325,10 @@
 
 (deftest broken-schema-load-test
   (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Schema invalid"
-                        (oas/load-schema "classpath://test-broken.json"))))
+                        (oas/read-schema "classpath://test-broken.json"))))
 
 (deftest validate-inputstream-test
-  (let [schema (oas/load-schema "classpath://schema/oas/3.1/store.json")
+  (let [schema (oas/read-schema "classpath://schema/oas/3.1/store.json")
         routes-schema (oas/schema->routes-schema schema)
         body-schema (get-in routes-schema [[:post "/items"] "requestBody" "content" "application/json" "schema"])]
     (is (nil? (oas/validate schema body-schema

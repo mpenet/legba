@@ -90,7 +90,7 @@
               (.resolve (SchemaLocation/of schema-uri)
                         (str "#" json-pointer))))
 
-(defn load-schema
+(defn read-schema
   "Loads JSON or YAML schema from `schema-uri` and returns
   map (of :openapi-schema, :schema-uri, :schema-registry) that contains all the
   necessary information to perform `validate!` calls later (minus a JSON
@@ -114,7 +114,7 @@
      :schema-uri schema-uri
      :schema-registry schema-registry}))
 
-(defn load-schema-string
+(defn read-schema-str
   "Loads a JSON or YAML OpenAPI schema from a raw string `s`.
 
   An optional `:schema-uri` can be provided to anchor `$ref` resolution; if
@@ -122,7 +122,7 @@
   detected by the `:yaml` format option (`:format :yaml`), otherwise JSON is
   assumed.
 
-  Returns the same map as `load-schema`: `{:openapi-schema … :schema-uri …
+  Returns the same map as `read-schema`: `{:openapi-schema … :schema-uri …
   :schema-registry …}`."
   [^String s & {:as _opts :keys [schema-uri format validate-schema]
                 :or {validate-schema true}}]
