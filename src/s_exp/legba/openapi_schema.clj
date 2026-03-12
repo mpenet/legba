@@ -14,7 +14,8 @@
             SchemaLocation)
            (com.networknt.schema.dialect Dialects)
            (com.networknt.schema.path PathType)
-           (com.networknt.schema.resource SchemaIdResolvers$Builder)))
+           (com.networknt.schema.resource SchemaIdResolvers$Builder)
+           (java.io InputStream)))
 
 (set! *warn-on-reflection* true)
 
@@ -123,9 +124,17 @@
   (let [ptr (:json-pointer (meta sub-schema))
         schema (get-schema schema-registry schema-uri ptr)]
     (validation-result
-     (if (instance? JsonNode val)
+     (cond
+       (instance? JsonNode val)
        (.validate schema ^JsonNode val
                   OutputFormat/RESULT)
+
+       (instance? InputStream val)
+       (.validate schema
+                  ^String (slurp val)
+                  InputFormat/JSON
+                  OutputFormat/RESULT)
+       :else
        (.validate schema (or ^String val "")
                   InputFormat/JSON
                   OutputFormat/RESULT)))))

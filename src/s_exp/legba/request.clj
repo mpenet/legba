@@ -123,12 +123,16 @@
         (if-let [body-schema (mime-type/match-schema-mime-type req-body-schema
                                                                content-type)]
           ;; we must ensure we don't force double parsing of the input json, if
-          ;; conten-type is json we load into jsonnode and pass it along to
-          ;; validator and then later turn that jsonnode into a clj thing
+          ;; content-type is json we load into jsonnode and pass it along to
+          ;; validator and then later turn that jsonnode into a clj thing.
+          ;; For multipart/form-data, Ring parses fields into :multipart-params,
+          ;; so we convert that map to a JsonNode for schema validation.
           (let [json-body (json/json-content-type? content-type)
-                body (if json-body
-                       (-> body slurp json/str->json-node)
-                       body)]
+                multipart-body (json/multipart-content-type? content-type)
+                body (cond
+                       json-body (-> body slurp json/str->json-node)
+                       multipart-body (json/clj->json-node (:multipart-params request))
+                       :else body)]
             (when-let [errors (schema/validate schema
                                                body-schema
                                                body

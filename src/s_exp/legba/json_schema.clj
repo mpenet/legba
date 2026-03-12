@@ -11,7 +11,8 @@
                                  OutputFormat
                                  SchemaLocation)
            (com.networknt.schema.dialect Dialect)
-           (com.networknt.schema.path PathType)))
+           (com.networknt.schema.path PathType)
+           (java.io InputStream)))
 
 (set! *warn-on-reflection* true)
 
@@ -108,9 +109,17 @@
       :keys [validation-result]
       :or {validation-result validation-result}}]
   (validation-result
-   (if (instance? JsonNode val)
+   (cond
+     (instance? JsonNode val)
      (.validate schema ^JsonNode val
                 OutputFormat/RESULT)
+
+     (instance? InputStream val)
+     (.validate schema
+                ^String (slurp val)
+                InputFormat/JSON
+                OutputFormat/RESULT)
+     :else
      (.validate schema (or ^String val "")
                 InputFormat/JSON
                 OutputFormat/RESULT))))

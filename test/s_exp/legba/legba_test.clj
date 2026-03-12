@@ -52,7 +52,8 @@
                       (fn [_request] list-items-response)
                       [:get "/search"]
                       (fn [_request] search-items-response)
-                      [:post "/items"] (fn [_request] post-items-response)}
+                      [:post "/items"] (fn [_request] post-items-response)
+                      [:post "/upload"] (fn [_request] {:status 201 :body {:ok true}})}
                      schema-path
                      opts))
 
@@ -300,6 +301,33 @@
 (deftest broken-schema-load-test
   (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Schema invalid"
                         (oas/load-schema "classpath://test-broken.json"))))
+
+(deftest validate-inputstream-test
+  (let [schema (oas/load-schema "classpath://schema/oas/3.1/store.json")
+        routes-schema (oas/schema->routes-schema schema)
+        body-schema (get-in routes-schema [[:post "/items"] "requestBody" "content" "application/json" "schema"])]
+    (is (nil? (oas/validate schema body-schema
+                            (input-stream "{\"name\":\"foo\",\"value\":1.0}"))))
+    (is (seq (oas/validate schema body-schema
+                           (input-stream "{\"name\":\"foo\"}"))))))
+
+(deftest multipart-body-test
+  (let [h (make-handler {})]
+    (is (= 201
+           (:status (h {:request-method :post
+                        :headers {"content-type" "multipart/form-data"}
+                        :uri "/upload"
+                        :multipart-params {"name" "foo" "value" 1.5}}))))
+    (is (= 400
+           (:status (h {:request-method :post
+                        :headers {"content-type" "multipart/form-data"}
+                        :uri "/upload"
+                        :multipart-params {"name" "foo"}}))))
+    (is (= 400
+           (:status (h {:request-method :post
+                        :headers {"content-type" "multipart/form-data"}
+                        :uri "/upload"
+                        :multipart-params {"name" 42 "value" 1.5}}))))))
 
 (deftest path-properties-test
   (let [routes {[:get "/{id}"] (fn [_] {:status 200

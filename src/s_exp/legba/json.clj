@@ -149,3 +149,9 @@
   [content-type]
   (re-find #"(?i)application/json(:?[;]|$)"
            content-type))
+
+(defn multipart-content-type?
+  "Returns true if `content-type` is `multipart/form-data`"
+  [content-type]
+  (re-find #"(?i)multipart/form-data(:?[;]|$)"
+           content-type))
