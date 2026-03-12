@@ -53,7 +53,8 @@
                       [:get "/search"]
                       (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)
-                      [:post "/upload"] (fn [_request] {:status 201 :body {:ok true}})}
+                      [:post "/upload"] (fn [_request] {:status 201 :body {:ok true}})
+                      [:post "/notes"] (fn [_request] {:status 204})}
                      schema-path
                      opts))
 
@@ -328,6 +329,37 @@
                         :headers {"content-type" "multipart/form-data"}
                         :uri "/upload"
                         :multipart-params {"name" 42 "value" 1.5}}))))))
+
+(deftest missing-required-body-test
+  (let [h (make-handler {})]
+    (is (= {:status 400
+            :headers {"Content-Type" "application/problem+json"}
+            :body {"title" "Missing Required Request Body"
+                   "type" "#/http-problem-types/request-missing-body"
+                   "errors" [{"detail" "required request body missing"
+                              "pointer" "/paths/~1upload/post/requestBody"}]}}
+           (read-body-as-edn
+            (h {:request-method :post
+                :headers {"content-type" "multipart/form-data"}
+                :uri "/upload"}))))))
+
+(deftest optional-body-test
+  (let [h (make-handler {})]
+    (is (= 204 (:status (h {:request-method :post
+                            :uri "/notes"}))))
+    (is (= 204 (:status (h {:request-method :post
+                            :headers {"content-type" "application/json"}
+                            :uri "/notes"
+                            :body (input-stream "{\"text\":\"hello\"}")}))))
+    (is (= 400 (:status (h {:request-method :post
+                            :headers {"content-type" "application/json"}
+                            :uri "/notes"
+                            :body (input-stream "{}")}))))))
+
+(deftest no-content-response-test
+  (let [h (make-handler {})]
+    (is (= 204 (:status (h {:request-method :post
+                            :uri "/notes"}))))))
 
 (deftest path-properties-test
   (let [routes {[:get "/{id}"] (fn [_] {:status 200

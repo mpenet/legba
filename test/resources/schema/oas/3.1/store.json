@@ -248,6 +248,30 @@
                 }
             }
         },
+        "/notes": {
+            "post": {
+                "summary": "Create a note with optional body",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {"type": "string"}
+                                },
+                                "required": ["text"]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Note created, no content."
+                    }
+                }
+            }
+        },
         "/item/{itemId}": {
             "get": {
                 "summary": "Retrieve a single item by ID",

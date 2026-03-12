@@ -118,38 +118,51 @@
   "Performs eventual validation of request `:body`"
   [{:as request :keys [body headers]} schema sub-schema opts]
   (let [req-body-schema (get sub-schema "requestBody")]
-    (if (get req-body-schema "required")
-      (let [content-type (get headers "content-type")]
-        (if-let [body-schema (mime-type/match-schema-mime-type req-body-schema
-                                                               content-type)]
-          ;; we must ensure we don't force double parsing of the input json, if
-          ;; content-type is json we load into jsonnode and pass it along to
-          ;; validator and then later turn that jsonnode into a clj thing.
-          ;; For multipart/form-data, Ring parses fields into :multipart-params,
-          ;; so we convert that map to a JsonNode for schema validation.
-          (let [json-body (json/json-content-type? content-type)
-                multipart-body (json/multipart-content-type? content-type)
-                body (cond
-                       json-body (-> body slurp json/str->json-node)
-                       multipart-body (json/clj->json-node (:multipart-params request))
-                       :else body)]
-            (when-let [errors (schema/validate schema
-                                               body-schema
-                                               body
-                                               opts)]
-              (throw (ex-info "Invalid Request Body"
-                              {:type :s-exp.legba.request/invalid-body
-                               :schema body-schema
-                               :errors errors})))
-            (cond-> request
-              (and json-body (:read-request-json-body opts))
-              (assoc :body (json/json-node->clj body opts))))
-          (throw (ex-info "Invalid content type for request"
-                          {:type :s-exp.legba.request/invalid-content-type
-                           :errors [{:pointer (-> req-body-schema meta :json-pointer)
-                                     :detail "No matching content-type"}]
-                           :schema req-body-schema}))))
-      request)))
+    (if-not req-body-schema
+      request
+      (let [required (get req-body-schema "required")
+            content-type (get headers "content-type")
+            multipart-body (some-> content-type json/multipart-content-type?)
+            ;; for multipart, body lives in :multipart-params; for others check :body
+            body-present (if multipart-body
+                           (some? (:multipart-params request))
+                           (some? body))]
+        (if-not body-present
+          (if required
+            (throw (ex-info "Missing Required Request Body"
+                            {:type :s-exp.legba.request/missing-body
+                             :errors [{:pointer (-> req-body-schema meta :json-pointer)
+                                       :detail "required request body missing"}]
+                             :schema req-body-schema}))
+            request)
+          (if-let [body-schema (mime-type/match-schema-mime-type req-body-schema
+                                                                 content-type)]
+            ;; we must ensure we don't force double parsing of the input json, if
+            ;; content-type is json we load into jsonnode and pass it along to
+            ;; validator and then later turn that jsonnode into a clj thing.
+            ;; For multipart/form-data, Ring parses fields into :multipart-params,
+            ;; so we convert that map to a JsonNode for schema validation.
+            (let [json-body (json/json-content-type? content-type)
+                  body (cond
+                         json-body (-> body slurp json/str->json-node)
+                         multipart-body (json/clj->json-node (:multipart-params request))
+                         :else body)]
+              (when-let [errors (schema/validate schema
+                                                 body-schema
+                                                 body
+                                                 opts)]
+                (throw (ex-info "Invalid Request Body"
+                                {:type :s-exp.legba.request/invalid-body
+                                 :schema body-schema
+                                 :errors errors})))
+              (cond-> request
+                (and json-body (:read-request-json-body opts))
+                (assoc :body (json/json-node->clj body opts))))
+            (throw (ex-info "Invalid content type for request"
+                            {:type :s-exp.legba.request/invalid-content-type
+                             :errors [{:pointer (-> req-body-schema meta :json-pointer)
+                                       :detail "No matching content-type"}]
+                             :schema req-body-schema}))))))))
 
 (defn validate
   "Performs validation of RING request map"
@@ -170,6 +183,7 @@
        :s-exp.legba.request/invalid-query-parameters
        :s-exp.legba.request/invalid-cookie-parameters
        :s-exp.legba.request/invalid-content-type
+       :s-exp.legba.request/missing-body
        :s-exp.legba.request/missing-cookie-parameter
        :s-exp.legba.request/missing-query-parameter])
 (ex/derive :s-exp.legba.request/invalid :s-exp.legba/invalid)

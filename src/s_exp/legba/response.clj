@@ -20,30 +20,33 @@
                       {:type :s-exp.legba.response/invalid-format-for-status
                        :schema sub-schema
                        :response response})))
-    (if-let [body-schema (mime-type/match-schema-mime-type ct-schema content-type)]
-      (let [;; if we have a json-body we convert it to jsonnode for validation
-            json-body (json/json-content-type? content-type)
-            body (cond-> body
-                   json-body
-                   json/clj->json-node)
-            ;; we can convert already, either we output in error, or response
-            response (cond-> response
-                       (and json-body (:write-response-json-body opts))
-                       (assoc :body (json/json-node->str body)))]
-        (when-let [errors (schema/validate schema
-                                           body-schema
-                                           body
-                                           opts)]
-          (throw (ex-info "Invalid Response Body"
-                          {:type :s-exp.legba.response/invalid-body
-                           :schema body-schema
-                           :errors errors
-                           :response response})))
-        response)
-      (throw (ex-info "Invalid response content-type"
-                      {:type :s-exp.legba.response/invalid-content-type
-                       :schema ct-schema
-                       :response response})))))
+    (if-let [content (get ct-schema "content")]
+      (if-let [body-schema (mime-type/match-schema-mime-type {"content" content} content-type)]
+        (let [;; if we have a json-body we convert it to jsonnode for validation
+              json-body (json/json-content-type? content-type)
+              body (cond-> body
+                     json-body
+                     json/clj->json-node)
+              ;; we can convert already, either we output in error, or response
+              response (cond-> response
+                         (and json-body (:write-response-json-body opts))
+                         (assoc :body (json/json-node->str body)))]
+          (when-let [errors (schema/validate schema
+                                             body-schema
+                                             body
+                                             opts)]
+            (throw (ex-info "Invalid Response Body"
+                            {:type :s-exp.legba.response/invalid-body
+                             :schema body-schema
+                             :errors errors
+                             :response response})))
+          response)
+        (throw (ex-info "Invalid response content-type"
+                        {:type :s-exp.legba.response/invalid-content-type
+                         :schema ct-schema
+                         :response response})))
+      ;; no content defined for this status (e.g. 204 No Content) — nothing to validate
+      response)))
 
 (defn validate-response-headers
   "Performs validation of response headers"
