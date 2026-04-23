@@ -20,6 +20,7 @@
            list-items-response
            post-items-response
            search-items-response
+           headers-test-response
            schema-path]
     :or {schema-path "classpath://schema/oas/3.1/store.json"
          item-by-id-response
@@ -42,7 +43,12 @@
          {:body {:name "yolo"
                  :id item-id
                  :value 1.0}
-          :status 201}}}
+          :status 201}
+         headers-test-response
+         {:status 200
+          :headers {"content-type" "application/json"
+                    "X-Required-Header" "present"}
+          :body {:ok true}}}}
    & [opts]]
   (l/routing-handler {[:get "/item/{itemId}"]
                       (fn [_request] item-by-id-response)
@@ -54,7 +60,8 @@
                       (fn [_request] search-items-response)
                       [:post "/items"] (fn [_request] post-items-response)
                       [:post "/upload"] (fn [_request] {:status 201 :body {:ok true}})
-                      [:post "/notes"] (fn [_request] {:status 204})}
+                      [:post "/notes"] (fn [_request] {:status 204})
+                      [:get "/headers-test"] (fn [_request] headers-test-response)}
                      schema-path
                      opts))
 
@@ -402,3 +409,39 @@
                                                                "OPTIONS" "TRACE"]}})
                 [:trace "/{id}"] (fn [_] {:status 405})}]
     (is (fn? (l/routing-handler routes "classpath://schema/oas/3.1/all-path-properties-and-methods.yaml")))))
+
+(deftest response-headers-test
+  (let [req {:request-method :get :uri "/headers-test"}]
+    ;; required header present + optional header absent -> passes
+    (let [h (make-handler {} {})]
+      (is (= 200 (:status (h req)))))
+
+    ;; required header absent -> 400
+    (let [h (make-handler {:headers-test-response
+                           {:status 200
+                            :headers {"content-type" "application/json"}
+                            :body {:ok true}}}
+                          {})
+          {:keys [status body]} (read-body-as-edn (h req))]
+      (is (= 400 status))
+      (is (= "#/http-problem-types/response-invalid-header" (get body "type"))))
+
+    ;; optional header absent -> passes (no required flag)
+    (let [h (make-handler {:headers-test-response
+                           {:status 200
+                            :headers {"content-type" "application/json"
+                                      "X-Required-Header" "present"}
+                            :body {:ok true}}}
+                          {})
+          {:keys [status]} (h req)]
+      (is (= 200 status)))
+
+    ;; required header present but invalid type -> 400
+    (let [h (make-handler {:headers-test-response
+                           {:status 200
+                            :headers {"content-type" "application/json"
+                                      "X-Required-Header" 42}
+                            :body {:ok true}}}
+                          {})
+          {:keys [status]} (h req)]
+      (is (= 400 status)))))

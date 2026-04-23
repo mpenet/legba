@@ -272,6 +272,36 @@
                 }
             }
         },
+        "/headers-test": {
+            "get": {
+                "summary": "Endpoint with required and optional response headers",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "headers": {
+                            "X-Required-Header": {
+                                "required": true,
+                                "schema": {"type": "string"}
+                            },
+                            "X-Optional-Header": {
+                                "required": false,
+                                "schema": {"type": "string"}
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ok": {"type": "boolean"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/item/{itemId}": {
             "get": {
                 "summary": "Retrieve a single item by ID",

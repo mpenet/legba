@@ -55,17 +55,26 @@
   (when-let [headers-schema (or (some-> sub-schema (get-in ["responses" (str status) "headers"]))
                                 (some-> sub-schema (get-in ["responses" "default" "headers"])))]
     (doseq [[header-name header-schema] headers-schema
-            :let [header-val (get-in response [:headers header-name])]]
-      (when-let [errors (schema/validate schema header-schema
-                                         (pr-str header-val)
-                                         opts)]
-        (throw (ex-info (format "Invalid Response Header: %s:%s"
-                                header-name
-                                header-val)
-                        {:type :s-exp.legba.response/invalid-header
-                         :schema headers-schema
-                         :errors errors
-                         :response response})))))
+            :let [header-val (get-in response [:headers header-name] ::missing)
+                  required (get header-schema "required")
+                  missing-val (= ::missing header-val)]]
+      (if missing-val
+        (when required
+          (throw (ex-info (format "Missing required Response Header: %s" header-name)
+                          {:type :s-exp.legba.response/invalid-header
+                           :schema headers-schema
+                           :errors [{:message (format "Required header '%s' is missing" header-name)}]
+                           :response response})))
+        (when-let [errors (schema/validate schema (get header-schema "schema")
+                                           (pr-str header-val)
+                                           opts)]
+          (throw (ex-info (format "Invalid Response Header: %s:%s"
+                                  header-name
+                                  header-val)
+                          {:type :s-exp.legba.response/invalid-header
+                           :schema headers-schema
+                           :errors errors
+                           :response response}))))))
   response)
 
 (defn validate
